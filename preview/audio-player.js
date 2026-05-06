@@ -1,14 +1,78 @@
 (function() {
   'use strict';
 
+  const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
+
+  function isAudioExtension(ext) {
+    return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
+  }
+
+  function getAudioMimeType(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const mimeTypes = {
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'm4a': 'audio/mp4',
+      'flac': 'audio/flac',
+      'aac': 'audio/aac'
+    };
+    return mimeTypes[ext] || 'audio/mpeg';
+  }
+
+  function base64ToBlob(base64, mimeType) {
+    const byteString = atob(base64);
+    const byteArray = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      byteArray[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([byteArray], { type: mimeType });
+  }
+
+  function fetchAudioFromBackground(url, filename) {
+    return new Promise((resolve, reject) => {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ action: 'fetchAudio', url: url }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          if (response.success) {
+            const audioBlob = base64ToBlob(response.data, getAudioMimeType(filename));
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(reader.result);
+            };
+            reader.onerror = () => {
+              reject(new Error('Failed to convert blob to ArrayBuffer'));
+            };
+            reader.readAsArrayBuffer(audioBlob);
+          } else {
+            reject(new Error(response.error || 'Failed to fetch audio'));
+          }
+        });
+      } else {
+        reject(new Error('Chrome runtime not available'));
+      }
+    });
+  }
+
   class GitPreviewAudioPlayer {
     constructor(options = {}) {
       this.url = options.url;
       this.filename = options.filename || 'Audio File';
-      this.audio = new Audio();
+      this.arrayBuffer = options.arrayBuffer;
+      this.audioBuffer = null;
+      this.audioContext = null;
+      this.sourceNode = null;
+      this.gainNode = null;
       this.isPlaying = false;
+      this.startTime = 0;
+      this.pauseTime = 0;
+      this.volume = 1;
       this.container = null;
       this.elements = {};
+      this.progressUpdateInterval = null;
     }
 
     render() {
@@ -17,7 +81,7 @@
       this.container.innerHTML = this.getHTML();
       this.cacheElements();
       this.bindEvents();
-      this.loadAudio();
+      this.initAudio();
       return this.container;
     }
 
@@ -94,18 +158,23 @@
       this.elements.nextBtn.addEventListener('click', () => this.forward(10));
       this.elements.progress.addEventListener('input', (e) => this.seek(e.target.value));
       this.elements.volume.addEventListener('input', (e) => this.setVolume(e.target.value));
-
-      this.audio.addEventListener('timeupdate', () => this.updateProgress());
-      this.audio.addEventListener('loadedmetadata', () => this.updateDuration());
-      this.audio.addEventListener('ended', () => this.onEnded());
-      this.audio.addEventListener('error', (e) => this.onError(e));
     }
 
-    loadAudio() {
-      this.audio.crossOrigin = 'anonymous';
-      this.audio.src = this.url;
-      this.audio.volume = 1;
-      this.elements.meta.textContent = 'Loading audio...';
+    async initAudio() {
+      try {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.connect(this.audioContext.destination);
+        this.gainNode.gain.value = this.volume;
+
+        this.audioBuffer = await this.audioContext.decodeAudioData(this.arrayBuffer.slice(0));
+        
+        this.elements.meta.textContent = `Audio File (${this.formatFileSize(this.audioBuffer.duration)})`;
+        this.elements.totalTime.textContent = this.formatTime(this.audioBuffer.duration);
+      } catch (err) {
+        console.error('Failed to initialize audio:', err);
+        this.elements.meta.textContent = 'Failed to load audio';
+      }
     }
 
     togglePlay() {
@@ -117,18 +186,47 @@
     }
 
     play() {
-      this.audio.play().then(() => {
-        this.isPlaying = true;
-        this.updatePlayPauseIcon();
-      }).catch((err) => {
-        console.error('Failed to play audio:', err);
-      });
+      if (!this.audioContext || !this.audioBuffer) return;
+
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+
+      this.stopSource();
+
+      this.sourceNode = this.audioContext.createBufferSource();
+      this.sourceNode.buffer = this.audioBuffer;
+      this.sourceNode.connect(this.gainNode);
+
+      const offset = this.pauseTime;
+      this.sourceNode.start(0, offset);
+      this.startTime = this.audioContext.currentTime - offset;
+      
+      this.isPlaying = true;
+      this.updatePlayPauseIcon();
+      this.startProgressUpdate();
     }
 
     pause() {
-      this.audio.pause();
+      if (!this.isPlaying) return;
+
+      this.pauseTime = this.getCurrentTime();
+      this.stopSource();
       this.isPlaying = false;
       this.updatePlayPauseIcon();
+      this.stopProgressUpdate();
+      this.updateProgress();
+    }
+
+    stopSource() {
+      if (this.sourceNode) {
+        try {
+          this.sourceNode.stop();
+        } catch (err) {
+          // Ignore errors if already stopped
+        }
+        this.sourceNode = null;
+      }
     }
 
     updatePlayPauseIcon() {
@@ -142,20 +240,59 @@
     }
 
     rewind(seconds) {
-      this.audio.currentTime = Math.max(0, this.audio.currentTime - seconds);
+      const currentTime = this.getCurrentTime();
+      const wasPlaying = this.isPlaying;
+      
+      if (wasPlaying) {
+        this.pause();
+      }
+      
+      this.pauseTime = Math.max(0, currentTime - seconds);
+      this.updateProgress();
+      
+      if (wasPlaying) {
+        this.play();
+      }
     }
 
     forward(seconds) {
-      this.audio.currentTime = Math.min(this.audio.duration, this.audio.currentTime + seconds);
+      const currentTime = this.getCurrentTime();
+      const duration = this.getDuration();
+      const wasPlaying = this.isPlaying;
+      
+      if (wasPlaying) {
+        this.pause();
+      }
+      
+      this.pauseTime = Math.min(duration, currentTime + seconds);
+      this.updateProgress();
+      
+      if (wasPlaying) {
+        this.play();
+      }
     }
 
     seek(percent) {
-      const time = (percent / 100) * this.audio.duration;
-      this.audio.currentTime = time;
+      const duration = this.getDuration();
+      const wasPlaying = this.isPlaying;
+      
+      if (wasPlaying) {
+        this.pause();
+      }
+      
+      this.pauseTime = (percent / 100) * duration;
+      this.updateProgress();
+      
+      if (wasPlaying) {
+        this.play();
+      }
     }
 
     setVolume(percent) {
-      this.audio.volume = percent / 100;
+      this.volume = percent / 100;
+      if (this.gainNode) {
+        this.gainNode.gain.value = this.volume;
+      }
       this.updateVolumeIcon(percent);
     }
 
@@ -172,27 +309,57 @@
       this.elements.volumeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="${path}" />`;
     }
 
+    getCurrentTime() {
+      if (this.isPlaying && this.audioContext) {
+        return this.audioContext.currentTime - this.startTime;
+      }
+      return this.pauseTime;
+    }
+
+    getDuration() {
+      return this.audioBuffer ? this.audioBuffer.duration : 0;
+    }
+
+    startProgressUpdate() {
+      this.stopProgressUpdate();
+      this.progressUpdateInterval = setInterval(() => {
+        this.updateProgress();
+      }, 100);
+    }
+
+    stopProgressUpdate() {
+      if (this.progressUpdateInterval) {
+        clearInterval(this.progressUpdateInterval);
+        this.progressUpdateInterval = null;
+      }
+    }
+
     updateProgress() {
-      if (this.audio.duration) {
-        const percent = (this.audio.currentTime / this.audio.duration) * 100;
+      const currentTime = this.getCurrentTime();
+      const duration = this.getDuration();
+      
+      if (duration > 0) {
+        const percent = (currentTime / duration) * 100;
         this.elements.progress.value = percent;
-        this.elements.currentTime.textContent = this.formatTime(this.audio.currentTime);
+        this.elements.currentTime.textContent = this.formatTime(currentTime);
       }
     }
 
     updateDuration() {
-      this.elements.totalTime.textContent = this.formatTime(this.audio.duration);
-      this.elements.meta.textContent = `Audio File (${this.formatFileSize(this.audio.duration)})`;
+      const duration = this.getDuration();
+      this.elements.totalTime.textContent = this.formatTime(duration);
     }
 
     onEnded() {
       this.isPlaying = false;
+      this.pauseTime = 0;
       this.updatePlayPauseIcon();
-      this.audio.currentTime = 0;
+      this.stopProgressUpdate();
+      this.updateProgress();
     }
 
-    onError(e) {
-      console.error('Audio error:', e);
+    onError(err) {
+      console.error('Audio error:', err);
       this.elements.meta.textContent = 'Failed to load audio';
     }
 
@@ -204,7 +371,7 @@
     }
 
     formatFileSize(duration) {
-      return `${this.formatTime(duration)}`;
+      return this.formatTime(duration);
     }
 
     escapeHTML(str) {
@@ -215,13 +382,89 @@
 
     destroy() {
       this.pause();
-      this.audio.src = '';
-      this.audio.load();
+      this.stopProgressUpdate();
+      
+      if (this.sourceNode) {
+        try {
+          this.sourceNode.disconnect();
+        } catch (err) {
+          console.error('Error disconnecting source node:', err);
+        }
+        this.sourceNode = null;
+      }
+      
+      if (this.gainNode) {
+        try {
+          this.gainNode.disconnect();
+        } catch (err) {
+          console.error('Error disconnecting gain node:', err);
+        }
+        this.gainNode = null;
+      }
+      
+      if (this.audioContext) {
+        try {
+          this.audioContext.close();
+        } catch (err) {
+          console.error('Error closing audio context:', err);
+        }
+        this.audioContext = null;
+      }
+      
+      this.audioBuffer = null;
+      this.arrayBuffer = null;
+      
       if (this.container && this.container.parentNode) {
         this.container.parentNode.removeChild(this.container);
       }
     }
   }
 
+  let currentPlayer = null;
+
+  function openAudioPreview(url, filename, container) {
+    if (currentPlayer) {
+      currentPlayer.destroy();
+    }
+
+    container.innerHTML = `
+      <div class="gitpreview-loading">
+        <div class="gitpreview-spinner"></div>
+        <div class="gitpreview-loading-text">Loading ${filename}...</div>
+      </div>
+    `;
+
+    return fetchAudioFromBackground(url, filename)
+      .then((arrayBuffer) => {
+        currentPlayer = new GitPreviewAudioPlayer({
+          arrayBuffer: arrayBuffer,
+          url: url,
+          filename: filename
+        });
+        container.innerHTML = '';
+        container.appendChild(currentPlayer.render());
+        console.log('GitPreview: Audio player created successfully');
+      });
+  }
+
+  function closeAudioPreview() {
+    if (currentPlayer) {
+      currentPlayer.destroy();
+      currentPlayer = null;
+    }
+  }
+
   window.GitPreviewAudioPlayer = GitPreviewAudioPlayer;
+  window.GitPreviewAudio = {
+    AUDIO_EXTENSIONS,
+    isAudioExtension,
+    openAudioPreview,
+    closeAudioPreview,
+    getCurrentPlayer: () => currentPlayer,
+    togglePlay: () => currentPlayer?.togglePlay(),
+    rewind: (seconds) => currentPlayer?.rewind(seconds),
+    forward: (seconds) => currentPlayer?.forward(seconds),
+    setVolume: (percent) => currentPlayer?.setVolume(percent),
+    getVolume: () => currentPlayer ? currentPlayer.volume * 100 : 100
+  };
 })();

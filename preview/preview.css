@@ -1,163 +1,199 @@
-.gitpreview-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 999999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.gitpreview-modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.gitpreview-modal {
-  background-color: #1e1e1e;
-  border-radius: 8px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-  max-width: 90vw;
-  max-height: 90vh;
-  min-width: 300px;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transform: scale(0.9);
-  transition: transform 0.3s ease;
+.gitpreview-inline-container {
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  margin: 16px 0;
+  background-color: #ffffff;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-.gitpreview-modal-overlay.active .gitpreview-modal {
-  transform: scale(1);
-}
-
-.gitpreview-modal-header {
-  background-color: #2d2d2d;
-  padding: 12px 16px;
+.gitpreview-inline-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #404040;
-  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #d1d9e0;
+  background-color: #f6f8fa;
 }
 
-.gitpreview-modal-title {
-  color: #e0e0e0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+.gitpreview-inline-title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
   font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: calc(100% - 50px);
+  color: #1f2328;
 }
 
-.gitpreview-modal-close {
+.gitpreview-inline-close {
   background: none;
   border: none;
-  color: #999;
   cursor: pointer;
   padding: 4px;
+  color: #656d76;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
+}
+
+.gitpreview-inline-close:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #1f2328;
+}
+
+.gitpreview-inline-content {
+  padding: 24px;
+}
+
+.gitpreview-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  padding: 40px;
+  gap: 16px;
 }
 
-.gitpreview-modal-close:hover {
-  background-color: #404040;
-  color: #fff;
+.gitpreview-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #d1d9e0;
+  border-top-color: #0969da;
+  border-radius: 50%;
+  animation: gitpreview-spin 1s ease-in-out infinite;
 }
 
-.gitpreview-modal-close svg {
-  width: 20px;
-  height: 20px;
+@keyframes gitpreview-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.gitpreview-modal-content {
-  padding: 20px;
+.gitpreview-loading-text {
+  color: #656d76;
+  font-size: 14px;
+}
+
+.gitpreview-error {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  flex: 1;
-  overflow: auto;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  text-align: center;
+}
+
+.gitpreview-error-icon {
+  color: #cf222e;
+}
+
+.gitpreview-error-title {
+  color: #1f2328;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.gitpreview-error-message {
+  color: #656d76;
+  font-size: 14px;
+  margin: 0;
 }
 
 .gitpreview-preview-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 12px;
-  margin-left: 4px;
+  padding: 2px 8px;
   font-size: 12px;
   font-weight: 500;
   line-height: 20px;
   cursor: pointer;
   border-radius: 6px;
-  border: 1px solid;
-  transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.gitpreview-preview-btn.gitpreview-btn-primary {
-  background-color: #1f883d;
-  border-color: #1f883d;
-  color: #ffffff;
-}
-
-.gitpreview-preview-btn.gitpreview-btn-primary:hover {
-  background-color: #1a7f37;
-  border-color: #1a7f37;
-}
-
-.gitpreview-preview-btn.gitpreview-btn-secondary {
+  border: 1px solid rgba(31, 35, 40, 0.15);
   background-color: #f6f8fa;
-  border-color: #d1d9e0;
   color: #1f2328;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  vertical-align: middle;
+  margin-left: 4px;
+  flex-shrink: 0;
+  gap: 4px;
 }
 
-.gitpreview-preview-btn.gitpreview-btn-secondary:hover {
+.gitpreview-preview-btn:hover {
   background-color: #f3f4f6;
-  border-color: #d1d9e0;
-  color: #1f2328;
+  border-color: rgba(31, 35, 40, 0.2);
 }
 
-.gitpreview-preview-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.gitpreview-preview-btn svg {
-  width: 14px;
-  height: 14px;
-  margin-right: 4px;
+.gitpreview-preview-btn:active {
+  background-color: #e5e7eb;
 }
 
 .gitpreview-btn-icon {
-  padding: 3px;
-  margin-left: 2px;
+  padding: 2px;
 }
 
-.gitpreview-btn-icon svg {
-  margin-right: 0;
+.react-directory-truncate .gitpreview-preview-btn.gitpreview-btn-icon {
+  margin-left: 6px;
+  padding: 1px 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.react-directory-truncate:hover .gitpreview-preview-btn.gitpreview-btn-icon,
+.react-directory-row:hover .gitpreview-preview-btn.gitpreview-btn-icon {
+  opacity: 1;
+}
+
+[class*="BlobViewHeader"] .gitpreview-preview-btn.gitpreview-blob-preview-btn,
+[class*="react-blob-header"] .gitpreview-preview-btn.gitpreview-blob-preview-btn {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.gitpreview-blob-preview-btn {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(31, 35, 40, 0.15) !important;
+  color: #1f2328 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  height: auto !important;
+  padding: 3px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+
+.gitpreview-blob-preview-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: rgba(31, 35, 40, 0.2) !important;
+}
+
+.gitpreview-blob-preview-btn:active {
+  background-color: #e5e7eb !important;
+}
+
+.gitpreview-blob-preview-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
 }
 
 .gitpreview-audio-player {
   width: 100%;
   max-width: 600px;
   padding: 20px;
-  background-color: #252526;
+  background-color: #f6f8fa;
   border-radius: 8px;
+  margin: 0 auto;
 }
 
 .gitpreview-audio-info {
@@ -169,7 +205,7 @@
 .gitpreview-audio-icon {
   width: 48px;
   height: 48px;
-  background-color: #ff6b6b;
+  background-color: #0969da;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -188,14 +224,14 @@
 }
 
 .gitpreview-audio-filename {
-  color: #e0e0e0;
+  color: #1f2328;
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 4px 0;
 }
 
 .gitpreview-audio-meta {
-  color: #999;
+  color: #656d76;
   font-size: 12px;
   margin: 0;
 }
@@ -214,7 +250,7 @@
   width: 100%;
   height: 6px;
   -webkit-appearance: none;
-  background-color: #404040;
+  background-color: #d1d9e0;
   border-radius: 3px;
   cursor: pointer;
 }
@@ -223,7 +259,7 @@
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  background-color: #2188ff;
+  background-color: #0969da;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.1s ease;
@@ -236,7 +272,7 @@
 .gitpreview-audio-time {
   display: flex;
   justify-content: space-between;
-  color: #999;
+  color: #656d76;
   font-size: 12px;
   margin-top: 4px;
 }
@@ -252,7 +288,7 @@
 .gitpreview-audio-btn {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: #1f2328;
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
@@ -263,17 +299,17 @@
 }
 
 .gitpreview-audio-btn:hover {
-  background-color: #404040;
+  background-color: #e5e7eb;
 }
 
 .gitpreview-audio-btn.play-pause {
   width: 56px;
   height: 56px;
-  background-color: #2188ff;
+  background-color: #0969da;
 }
 
 .gitpreview-audio-btn.play-pause:hover {
-  background-color: #0366d6;
+  background-color: #0550ae;
 }
 
 .gitpreview-audio-btn svg {
@@ -284,19 +320,21 @@
 .gitpreview-audio-btn.play-pause svg {
   width: 28px;
   height: 28px;
+  color: white;
 }
 
 .gitpreview-audio-volume {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: center;
 }
 
 .gitpreview-audio-volume input[type="range"] {
   width: 100px;
   height: 4px;
   -webkit-appearance: none;
-  background-color: #404040;
+  background-color: #d1d9e0;
   border-radius: 2px;
   cursor: pointer;
 }
@@ -305,7 +343,7 @@
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  background-color: #2188ff;
+  background-color: #0969da;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -313,74 +351,12 @@
 .gitpreview-audio-volume svg {
   width: 16px;
   height: 16px;
-  color: #999;
+  color: #656d76;
 }
 
-.gitpreview-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.gitpreview-spinner {
-  width: 40px;
+.gitpreview-native-audio {
+  width: 100%;
+  min-width: 300px;
   height: 40px;
-  border: 3px solid #404040;
-  border-top-color: #2188ff;
-  border-radius: 50%;
-  animation: gitpreview-spin 1s linear infinite;
-}
-
-@keyframes gitpreview-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.gitpreview-loading-text {
-  color: #999;
-  font-size: 14px;
-  margin-top: 16px;
-}
-
-.gitpreview-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  text-align: center;
-}
-
-.gitpreview-error-icon {
-  width: 64px;
-  height: 64px;
-  background-color: #f85149;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.gitpreview-error-icon svg {
-  width: 32px;
-  height: 32px;
-  color: white;
-}
-
-.gitpreview-error-title {
-  color: #e0e0e0;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.gitpreview-error-message {
-  color: #999;
-  font-size: 14px;
-  margin: 0;
-  max-width: 300px;
+  display: block;
 }
