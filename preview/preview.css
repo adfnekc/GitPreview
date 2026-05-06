@@ -1,0 +1,386 @@
+.gitpreview-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.gitpreview-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.gitpreview-modal {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  max-width: 90vw;
+  max-height: 90vh;
+  min-width: 300px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+
+.gitpreview-modal-overlay.active .gitpreview-modal {
+  transform: scale(1);
+}
+
+.gitpreview-modal-header {
+  background-color: #2d2d2d;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #404040;
+  flex-shrink: 0;
+}
+
+.gitpreview-modal-title {
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 50px);
+}
+
+.gitpreview-modal-close {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.gitpreview-modal-close:hover {
+  background-color: #404040;
+  color: #fff;
+}
+
+.gitpreview-modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gitpreview-modal-content {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  overflow: auto;
+}
+
+.gitpreview-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.gitpreview-preview-btn.gitpreview-btn-primary {
+  background-color: #1f883d;
+  border-color: #1f883d;
+  color: #ffffff;
+}
+
+.gitpreview-preview-btn.gitpreview-btn-primary:hover {
+  background-color: #1a7f37;
+  border-color: #1a7f37;
+}
+
+.gitpreview-preview-btn.gitpreview-btn-secondary {
+  background-color: #f6f8fa;
+  border-color: #d1d9e0;
+  color: #1f2328;
+}
+
+.gitpreview-preview-btn.gitpreview-btn-secondary:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d9e0;
+  color: #1f2328;
+}
+
+.gitpreview-preview-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gitpreview-preview-btn svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
+.gitpreview-btn-icon {
+  padding: 3px;
+  margin-left: 2px;
+}
+
+.gitpreview-btn-icon svg {
+  margin-right: 0;
+}
+
+.gitpreview-audio-player {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  background-color: #252526;
+  border-radius: 8px;
+}
+
+.gitpreview-audio-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.gitpreview-audio-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #ff6b6b;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.gitpreview-audio-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.gitpreview-audio-details {
+  flex: 1;
+}
+
+.gitpreview-audio-filename {
+  color: #e0e0e0;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.gitpreview-audio-meta {
+  color: #999;
+  font-size: 12px;
+  margin: 0;
+}
+
+.gitpreview-audio-controls {
+  display: flex;
+  flex-direction: column;
+}
+
+.gitpreview-audio-progress {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.gitpreview-audio-progress input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background-color: #404040;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.gitpreview-audio-progress input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background-color: #2188ff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.gitpreview-audio-progress input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.gitpreview-audio-time {
+  display: flex;
+  justify-content: space-between;
+  color: #999;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.gitpreview-audio-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.gitpreview-audio-btn {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.gitpreview-audio-btn:hover {
+  background-color: #404040;
+}
+
+.gitpreview-audio-btn.play-pause {
+  width: 56px;
+  height: 56px;
+  background-color: #2188ff;
+}
+
+.gitpreview-audio-btn.play-pause:hover {
+  background-color: #0366d6;
+}
+
+.gitpreview-audio-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gitpreview-audio-btn.play-pause svg {
+  width: 28px;
+  height: 28px;
+}
+
+.gitpreview-audio-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gitpreview-audio-volume input[type="range"] {
+  width: 100px;
+  height: 4px;
+  -webkit-appearance: none;
+  background-color: #404040;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.gitpreview-audio-volume input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background-color: #2188ff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.gitpreview-audio-volume svg {
+  width: 16px;
+  height: 16px;
+  color: #999;
+}
+
+.gitpreview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.gitpreview-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #404040;
+  border-top-color: #2188ff;
+  border-radius: 50%;
+  animation: gitpreview-spin 1s linear infinite;
+}
+
+@keyframes gitpreview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gitpreview-loading-text {
+  color: #999;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.gitpreview-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.gitpreview-error-icon {
+  width: 64px;
+  height: 64px;
+  background-color: #f85149;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.gitpreview-error-icon svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.gitpreview-error-title {
+  color: #e0e0e0;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.gitpreview-error-message {
+  color: #999;
+  font-size: 14px;
+  margin: 0;
+  max-width: 300px;
+}
