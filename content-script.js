@@ -185,60 +185,70 @@
     if (rawBtn && rawBtn.parentElement) {
       rawBtn.parentElement.insertBefore(btn, rawBtn);
       console.log('GitPreview: Inserted next to Raw button');
-      return;
-    }
-
-    // Strategy 2: Find "View raw" link
-    const rawLink = document.querySelector('a[href*="raw.githubusercontent.com"], a[data-component="Link"][href*="/raw/"]');
-    if (rawLink && rawLink.parentElement) {
-      const section = rawLink.closest('section, [class*="BlobContent"]');
-      if (section && section.parentElement) {
-        section.parentElement.insertBefore(btn, section);
-        return;
+    } else {
+      // Strategy 2: Find "View raw" link
+      const rawLink = document.querySelector('a[href*="raw.githubusercontent.com"], a[data-component="Link"][href*="/raw/"]');
+      if (rawLink && rawLink.parentElement) {
+        const section = rawLink.closest('section, [class*="BlobContent"]');
+        if (section && section.parentElement) {
+          section.parentElement.insertBefore(btn, section);
+        }
+      } else {
+        // Strategy 3: Via more-file-actions-button
+        const moreActionsBtn = document.querySelector('[data-testid="more-file-actions-button"]');
+        if (moreActionsBtn) {
+          const actionsContainer = moreActionsBtn.closest('[class*="react-blob-header-edit-and-raw-actions"]')
+            || moreActionsBtn.parentElement;
+          if (actionsContainer) {
+            actionsContainer.insertBefore(btn, moreActionsBtn.closest('div') || moreActionsBtn);
+          }
+        } else {
+          // Strategy 4: Other common targets
+          const possibleTargets = [
+            '[class*="BlobViewHeader-module"]',
+            '[class*="react-blob-header-actions"]',
+            '[class*="react-blob-header-edit-and-raw-actions"]',
+            '.file-actions',
+            '[data-testid="file-header"]',
+            '.react-blob-header',
+            '.react-blob-header-actions',
+            '.Box-header .d-flex',
+            '.Box-header'
+          ];
+          
+          let inserted = false;
+          for (const selector of possibleTargets) {
+            const target = document.querySelector(selector);
+            if (target) {
+              console.log(`GitPreview: Found insert target: ${selector}`);
+              target.appendChild(btn);
+              inserted = true;
+              break;
+            }
+          }
+          
+          if (!inserted) {
+            // Fallback
+            const blobHeader = document.querySelector('[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]');
+            if (blobHeader) {
+              blobHeader.appendChild(btn);
+            } else {
+              console.log('GitPreview: Could not find insert target for blob page');
+              return;
+            }
+          }
+        }
       }
     }
 
-    // Strategy 3: Via more-file-actions-button
-    const moreActionsBtn = document.querySelector('[data-testid="more-file-actions-button"]');
-    if (moreActionsBtn) {
-      const actionsContainer = moreActionsBtn.closest('[class*="react-blob-header-edit-and-raw-actions"]')
-        || moreActionsBtn.parentElement;
-      if (actionsContainer) {
-        actionsContainer.insertBefore(btn, moreActionsBtn.closest('div') || moreActionsBtn);
-        return;
-      }
-    }
-
-    // Strategy 4: Other common targets
-    const possibleTargets = [
-      '[class*="BlobViewHeader-module"]',
-      '[class*="react-blob-header-actions"]',
-      '[class*="react-blob-header-edit-and-raw-actions"]',
-      '.file-actions',
-      '[data-testid="file-header"]',
-      '.react-blob-header',
-      '.react-blob-header-actions',
-      '.Box-header .d-flex',
-      '.Box-header'
-    ];
+    // Auto-open preview on blob page
+    console.log('GitPreview: Auto-opening preview on blob page');
+    openPreview(url, filename);
     
-    for (const selector of possibleTargets) {
-      const target = document.querySelector(selector);
-      if (target) {
-        console.log(`GitPreview: Found insert target: ${selector}`);
-        target.appendChild(btn);
-        return;
-      }
-    }
-
-    // Fallback
-    const blobHeader = document.querySelector('[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]');
-    if (blobHeader) {
-      blobHeader.appendChild(btn);
-      return;
-    }
-
-    console.log('GitPreview: Could not find insert target for blob page');
+    // Update button state to show "Hide"
+    setTimeout(() => {
+      updatePreviewButtonState(btn, true);
+    }, 100);
   }
 
   function escapeHTML(str) {
@@ -256,6 +266,30 @@
 
   function isSupportedExtension(ext) {
     return SUPPORTED_EXTENSIONS.includes(ext.toLowerCase());
+  }
+
+  function updatePreviewButtonState(btn, isPreviewOpen) {
+    try {
+      const svgElement = btn.querySelector('svg');
+      
+      if (isPreviewOpen) {
+        btn.title = 'Hide Preview';
+        if (!btn.classList.contains('gitpreview-btn-icon')) {
+          if (svgElement && svgElement.nextSibling && svgElement.nextSibling.nodeType === Node.TEXT_NODE) {
+            svgElement.nextSibling.textContent = ' Hide';
+          }
+        }
+      } else {
+        btn.title = 'Preview';
+        if (!btn.classList.contains('gitpreview-btn-icon')) {
+          if (svgElement && svgElement.nextSibling && svgElement.nextSibling.nodeType === Node.TEXT_NODE) {
+            svgElement.nextSibling.textContent = ' Preview';
+          }
+        }
+      }
+    } catch (err) {
+      console.error('GitPreview: Error updating button state:', err);
+    }
   }
 
   function createPreviewButton(fileUrl, filename, isIconOnly = false) {
@@ -280,7 +314,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
-        Preview
+         Preview
       `;
     }
 
@@ -288,6 +322,11 @@
       e.preventDefault();
       e.stopPropagation();
       openPreview(fileUrl, filename);
+      
+      setTimeout(() => {
+        const isOpen = isBlobPage() ? !!document.getElementById('gitpreview-inline') : !!document.getElementById('gitpreview-modal-overlay');
+        updatePreviewButtonState(btn, isOpen);
+      }, 100);
     });
 
     return btn;
@@ -297,7 +336,15 @@
     const extension = getFileExtension(fileUrl);
     const rawUrl = convertToRawUrl(fileUrl);
 
-    showLoading(filename);
+    if (isTreePage()) {
+      showLoadingModal(filename);
+    } else {
+      if (document.getElementById('gitpreview-inline')) {
+        closeModal();
+        return;
+      }
+      showLoading(filename);
+    }
 
     if (window.GitPreviewAudio?.isAudioExtension(extension)) {
       openAudioPreview(rawUrl, filename);
@@ -316,6 +363,108 @@
     }
 
     return url;
+  }
+
+  function isBlobPage() {
+    return location.href.includes('/blob/');
+  }
+
+  function isTreePage() {
+    return !isBlobPage();
+  }
+
+  function createModalContainer(filename) {
+    const overlay = document.createElement('div');
+    overlay.className = 'gitpreview-modal-overlay';
+    overlay.id = 'gitpreview-modal-overlay';
+
+    const container = document.createElement('div');
+    container.className = 'gitpreview-modal-container';
+
+    const header = document.createElement('div');
+    header.className = 'gitpreview-modal-header';
+    header.innerHTML = `
+      <div class="gitpreview-modal-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        ${escapeHTML(filename)}
+      </div>
+      <button class="gitpreview-modal-close" title="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    `;
+
+    header.querySelector('.gitpreview-modal-close').addEventListener('click', () => {
+      closeModal();
+    });
+
+    const content = document.createElement('div');
+    content.className = 'gitpreview-modal-content';
+    content.id = 'gitpreview-modal-content';
+
+    container.appendChild(header);
+    container.appendChild(content);
+    overlay.appendChild(container);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeModal();
+      }
+    });
+
+    return overlay;
+  }
+
+  function showLoadingModal(filename) {
+    removeExistingModal();
+
+    const overlay = createModalContainer(filename);
+    const content = overlay.querySelector('#gitpreview-modal-content');
+    content.innerHTML = `
+      <div class="gitpreview-loading">
+        <div class="gitpreview-spinner"></div>
+        <div class="gitpreview-loading-text">Loading ${filename}...</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function showErrorModal(filename, message) {
+    removeExistingModal();
+
+    const overlay = createModalContainer(filename);
+    const content = overlay.querySelector('#gitpreview-modal-content');
+    content.innerHTML = `
+      <div class="gitpreview-error">
+        <div class="gitpreview-error-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h4 class="gitpreview-error-title">Failed to Load File</h4>
+        <p class="gitpreview-error-message">${message}</p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function removeExistingModal() {
+    const existing = document.getElementById('gitpreview-modal-overlay');
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  function getCurrentPreviewContent() {
+    const modalContent = document.getElementById('gitpreview-modal-content');
+    if (modalContent) {
+      return modalContent;
+    }
+    const inlineContent = document.getElementById('gitpreview-inline-content');
+    return inlineContent;
   }
 
   function showLoading(filename) {
@@ -448,23 +597,31 @@
   function openAudioPreview(url, filename) {
     console.log('GitPreview: Opening audio preview for', filename);
 
-    let inlineContent = document.getElementById('gitpreview-inline-content');
+    let previewContent = getCurrentPreviewContent();
 
-    if (!inlineContent) {
-      showLoading(filename);
-      inlineContent = document.getElementById('gitpreview-inline-content');
+    if (!previewContent) {
+      if (isTreePage()) {
+        showLoadingModal(filename);
+      } else {
+        showLoading(filename);
+      }
+      previewContent = getCurrentPreviewContent();
     }
 
-    if (!inlineContent) {
-      console.error('GitPreview: Could not create inline container');
+    if (!previewContent) {
+      console.error('GitPreview: Could not create preview container');
       return;
     }
 
     if (window.GitPreviewAudio?.openAudioPreview) {
-      window.GitPreviewAudio.openAudioPreview(url, filename, inlineContent)
+      window.GitPreviewAudio.openAudioPreview(url, filename, previewContent)
         .catch(err => {
           console.error('GitPreview audio error:', err);
-          showError(filename, err.message || 'Failed to load audio');
+          if (isTreePage()) {
+            showErrorModal(filename, err.message || 'Failed to load audio');
+          } else {
+            showError(filename, err.message || 'Failed to load audio');
+          }
         });
     }
   }
@@ -474,6 +631,13 @@
       window.GitPreviewAudio.closeAudioPreview();
     }
     removeExistingPlayer();
+    removeExistingModal();
+    
+    // Update all preview buttons to show "Preview"
+    const allButtons = document.querySelectorAll('.gitpreview-preview-btn');
+    allButtons.forEach(btn => {
+      updatePreviewButtonState(btn, false);
+    });
   }
 
   function bindKeyboardShortcuts() {
