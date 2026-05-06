@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitPreview - 本地音频播放器测试</title>
+    <link rel="stylesheet" href="preview/preview.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f6f8fa;
+        }
+        h1 {
+            color: #1f2328;
+            border-bottom: 1px solid #d1d9e0;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            border: 1px solid #d1d9e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: #0969da;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .test-button:hover {
+            background: #0550ae;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 GitPreview 音频播放器本地测试</h1>
+    
+    <div class="test-section">
+        <h2>测试音频播放器</h2>
+        <p>选择一个音频文件来测试播放器：</p>
+        <input type="file" id="audioFile" accept="audio/*">
+        <br><br>
+        <button class="test-button" id="loadDemo">加载示例音频</button>
+        <div id="status"></div>
+        <div id="playerContainer"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>功能检查清单</h2>
+        <ul>
+            <li><input type="checkbox" id="check1"> 播放器正确显示文件名</li>
+            <li><input type="checkbox" id="check2"> 播放/暂停按钮正常工作</li>
+            <li><input type="checkbox" id="check3"> 波形可视化正确显示</li>
+            <li><input type="checkbox" id="check4"> 点击波形可以跳转进度</li>
+            <li><input type="checkbox" id="check5"> 音量控制正常工作</li>
+            <li><input type="checkbox" id="check6"> 时间显示正确</li>
+            <li><input type="checkbox" id="check7"> 窗口大小变化时波形重绘</li>
+        </ul>
+    </div>
+
+    <script src="preview/audio-player.js"></script>
+    <script>
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function createPlayer(arrayBuffer, filename) {
+            const container = document.getElementById('playerContainer');
+            container.innerHTML = '';
+            
+            if (window.GitPreviewAudio && window.GitPreviewAudioPlayer) {
+                const player = new window.GitPreviewAudioPlayer({
+                    arrayBuffer: arrayBuffer,
+                    filename: filename
+                });
+                
+                container.appendChild(player.render());
+                
+                // 初始化音频
+                setTimeout(() => {
+                    if (player.initAudio) {
+                        player.initAudio();
+                    }
+                }, 100);
+                
+                showStatus('播放器加载成功！');
+            } else {
+                showStatus('无法找到 GitPreviewAudioPlayer', 'error');
+            }
+        }
+
+        // 文件选择
+        document.getElementById('audioFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    createPlayer(event.target.result, file.name);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        // 生成简单的示例音频
+        document.getElementById('loadDemo').addEventListener('click', () => {
+            // 创建一个简单的音频文件
+            const sampleRate = 44100;
+            const duration = 2; // 2秒
+            const numChannels = 1;
+            
+            const arrayBuffer = new ArrayBuffer(44 + (sampleRate * duration * 2));
+            const view = new DataView(arrayBuffer);
+            
+            // WAV 头部
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + sampleRate * duration * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, sampleRate * duration * 2, true);
+            
+            // 生成简单的波形
+            let offset = 44;
+            for (let i = 0; i < sampleRate * duration; i++) {
+                const sample = Math.sin(i * 440 * 2 * Math.PI / sampleRate) * 0.3 * 32767;
+                view.setInt16(offset, sample, true);
+                offset += 2;
+            }
+            
+            createPlayer(arrayBuffer, 'demo-tone.wav');
+        });
+
+        console.log('GitPreview 本地测试页面已加载');
+        console.log('window.GitPreviewAudio:', window.GitPreviewAudio);
+        console.log('window.GitPreviewAudioPlayer:', window.GitPreviewAudioPlayer);
+    </script>
+</body>
+</html>

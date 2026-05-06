@@ -73,6 +73,8 @@
       this.container = null;
       this.elements = {};
       this.progressUpdateInterval = null;
+      this.waveformCanvas = null;
+      this.waveformData = [];
     }
 
     render() {
@@ -86,52 +88,48 @@
     }
 
     getHTML() {
+      const fileSizeKB = Math.round(this.arrayBuffer.byteLength / 1024);
       return `
-        <div class="gitpreview-audio-info">
-          <div class="gitpreview-audio-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        <div class="gitpreview-audio-header">
+          <div class="gitpreview-audio-header-left">
+            <svg class="gitpreview-audio-header-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
             </svg>
-          </div>
-          <div class="gitpreview-audio-details">
-            <h4 class="gitpreview-audio-filename">${this.escapeHTML(this.filename)}</h4>
-            <p class="gitpreview-audio-meta" id="gitpreview-audio-meta">Loading...</p>
+            <span class="gitpreview-audio-filename">${this.escapeHTML(this.filename)}</span>
+            <span class="gitpreview-audio-filesize">${fileSizeKB} KB</span>
           </div>
         </div>
-        <div class="gitpreview-audio-controls">
-          <div class="gitpreview-audio-progress">
-            <input type="range" id="gitpreview-progress" min="0" max="100" value="0">
-            <div class="gitpreview-audio-time">
-              <span id="gitpreview-current-time">0:00</span>
-              <span id="gitpreview-total-time">0:00</span>
+        <div class="gitpreview-audio-main">
+          <button class="gitpreview-audio-play-btn" id="gitpreview-play-pause" title="Play/Pause">
+            <svg id="gitpreview-play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg id="gitpreview-pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
+              <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+            </svg>
+          </button>
+          <div class="gitpreview-audio-time">
+            <span id="gitpreview-current-time">0:00</span>
+            <span>/</span>
+            <span id="gitpreview-total-time">0:00</span>
+          </div>
+          <div class="gitpreview-audio-waveform-container">
+            <canvas id="gitpreview-waveform" class="gitpreview-audio-waveform"></canvas>
+            <div class="gitpreview-audio-progress-bar" id="gitpreview-progress-bar">
+              <div class="gitpreview-audio-progress-fill" id="gitpreview-progress-fill"></div>
             </div>
           </div>
-          <div class="gitpreview-audio-buttons">
-            <button class="gitpreview-audio-btn" id="gitpreview-prev" title="Rewind 10s">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
-              </svg>
-            </button>
-            <button class="gitpreview-audio-btn play-pause" id="gitpreview-play-pause" title="Play/Pause">
-              <svg id="gitpreview-play-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              <svg id="gitpreview-pause-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
-                <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
-              </svg>
-            </button>
-            <button class="gitpreview-audio-btn" id="gitpreview-next" title="Forward 10s">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
-              </svg>
-            </button>
-          </div>
-          <div class="gitpreview-audio-volume">
-            <svg id="gitpreview-volume-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          <div class="gitpreview-audio-volume-section">
+            <svg class="gitpreview-audio-volume-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path id="gitpreview-volume-icon-path" stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
             </svg>
-            <input type="range" id="gitpreview-volume" min="0" max="100" value="100">
+            <input type="range" id="gitpreview-volume" min="0" max="100" value="100" class="gitpreview-audio-volume-slider">
           </div>
+          <button class="gitpreview-audio-more-btn" id="gitpreview-more" title="More options">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
         </div>
       `;
     }
@@ -141,23 +139,33 @@
         playPauseBtn: this.container.querySelector('#gitpreview-play-pause'),
         playIcon: this.container.querySelector('#gitpreview-play-icon'),
         pauseIcon: this.container.querySelector('#gitpreview-pause-icon'),
-        prevBtn: this.container.querySelector('#gitpreview-prev'),
-        nextBtn: this.container.querySelector('#gitpreview-next'),
-        progress: this.container.querySelector('#gitpreview-progress'),
+        waveform: this.container.querySelector('#gitpreview-waveform'),
+        progressBar: this.container.querySelector('#gitpreview-progress-bar'),
+        progressFill: this.container.querySelector('#gitpreview-progress-fill'),
         volume: this.container.querySelector('#gitpreview-volume'),
-        volumeIcon: this.container.querySelector('#gitpreview-volume-icon'),
+        volumeIconPath: this.container.querySelector('#gitpreview-volume-icon-path'),
         currentTime: this.container.querySelector('#gitpreview-current-time'),
         totalTime: this.container.querySelector('#gitpreview-total-time'),
-        meta: this.container.querySelector('#gitpreview-audio-meta')
+        moreBtn: this.container.querySelector('#gitpreview-more')
       };
     }
 
     bindEvents() {
       this.elements.playPauseBtn.addEventListener('click', () => this.togglePlay());
-      this.elements.prevBtn.addEventListener('click', () => this.rewind(10));
-      this.elements.nextBtn.addEventListener('click', () => this.forward(10));
-      this.elements.progress.addEventListener('input', (e) => this.seek(e.target.value));
-      this.elements.volume.addEventListener('input', (e) => this.setVolume(e.target.value));
+      this.elements.progressBar.addEventListener('click', (e) => this.handleProgressClick(e));
+      this.elements.volume.addEventListener('input', (e) => {
+        this.setVolume(e.target.value);
+        this.updateVolumeSliderBackground(e.target.value);
+      });
+      
+      window.addEventListener('resize', () => this.drawWaveform());
+      
+      // Initialize volume slider background
+      this.updateVolumeSliderBackground(100);
+    }
+
+    updateVolumeSliderBackground(percent) {
+      this.elements.volume.style.background = `linear-gradient(to right, #0969da 0%, #0969da ${percent}%, #d1d9e0 ${percent}%, #d1d9e0 100%)`;
     }
 
     async initAudio() {
@@ -169,11 +177,88 @@
 
         this.audioBuffer = await this.audioContext.decodeAudioData(this.arrayBuffer.slice(0));
         
-        this.elements.meta.textContent = `Audio File (${this.formatFileSize(this.audioBuffer.duration)})`;
         this.elements.totalTime.textContent = this.formatTime(this.audioBuffer.duration);
+        
+        // Generate and draw waveform
+        this.generateWaveformData();
+        this.drawWaveform();
       } catch (err) {
         console.error('Failed to initialize audio:', err);
-        this.elements.meta.textContent = 'Failed to load audio';
+      }
+    }
+
+    generateWaveformData() {
+      if (!this.audioBuffer) return;
+      
+      const channelData = this.audioBuffer.getChannelData(0);
+      const samples = 200;
+      const blockSize = Math.floor(channelData.length / samples);
+      this.waveformData = [];
+      
+      for (let i = 0; i < samples; i++) {
+        let sum = 0;
+        for (let j = 0; j < blockSize; j++) {
+          sum += Math.abs(channelData[i * blockSize + j]);
+        }
+        this.waveformData.push(sum / blockSize);
+      }
+      
+      // Normalize
+      const max = Math.max(...this.waveformData);
+      if (max > 0) {
+        this.waveformData = this.waveformData.map(v => v / max);
+      }
+    }
+
+    drawWaveform() {
+      const canvas = this.elements.waveform;
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      
+      const width = rect.width;
+      const height = rect.height;
+      const barWidth = width / this.waveformData.length;
+      const barGap = 1;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      this.waveformData.forEach((value, index) => {
+        const barHeight = Math.max(2, value * height * 0.8);
+        const x = index * barWidth;
+        const y = (height - barHeight) / 2;
+        
+        const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
+        gradient.addColorStop(0, '#8b949e');
+        gradient.addColorStop(0.5, '#6e7681');
+        gradient.addColorStop(1, '#8b949e');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, barWidth - barGap, barHeight);
+      });
+    }
+
+    handleProgressClick(e) {
+      const rect = this.elements.progressBar.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      const duration = this.getDuration();
+      const newTime = percentage * duration;
+      
+      const wasPlaying = this.isPlaying;
+      if (wasPlaying) {
+        this.pause();
+      }
+      this.pauseTime = newTime;
+      this.updateProgress();
+      if (wasPlaying) {
+        this.play();
       }
     }
 
@@ -197,6 +282,13 @@
       this.sourceNode = this.audioContext.createBufferSource();
       this.sourceNode.buffer = this.audioBuffer;
       this.sourceNode.connect(this.gainNode);
+      
+      // 监听音频结束事件
+      this.sourceNode.onended = () => {
+        if (this.isPlaying && this.getCurrentTime() >= this.getDuration()) {
+          this.onEnded();
+        }
+      };
 
       const offset = this.pauseTime;
       this.sourceNode.start(0, offset);
@@ -239,75 +331,7 @@
       }
     }
 
-    rewind(seconds) {
-      const currentTime = this.getCurrentTime();
-      const wasPlaying = this.isPlaying;
-      
-      if (wasPlaying) {
-        this.pause();
-      }
-      
-      this.pauseTime = Math.max(0, currentTime - seconds);
-      this.updateProgress();
-      
-      if (wasPlaying) {
-        this.play();
-      }
-    }
 
-    forward(seconds) {
-      const currentTime = this.getCurrentTime();
-      const duration = this.getDuration();
-      const wasPlaying = this.isPlaying;
-      
-      if (wasPlaying) {
-        this.pause();
-      }
-      
-      this.pauseTime = Math.min(duration, currentTime + seconds);
-      this.updateProgress();
-      
-      if (wasPlaying) {
-        this.play();
-      }
-    }
-
-    seek(percent) {
-      const duration = this.getDuration();
-      const wasPlaying = this.isPlaying;
-      
-      if (wasPlaying) {
-        this.pause();
-      }
-      
-      this.pauseTime = (percent / 100) * duration;
-      this.updateProgress();
-      
-      if (wasPlaying) {
-        this.play();
-      }
-    }
-
-    setVolume(percent) {
-      this.volume = percent / 100;
-      if (this.gainNode) {
-        this.gainNode.gain.value = this.volume;
-      }
-      this.updateVolumeIcon(percent);
-    }
-
-    updateVolumeIcon(percent) {
-      const vol = parseInt(percent);
-      let path = '';
-      if (vol === 0) {
-        path = 'M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
-      } else if (vol < 50) {
-        path = 'M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
-      } else {
-        path = 'M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
-      }
-      this.elements.volumeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="${path}" />`;
-    }
 
     getCurrentTime() {
       if (this.isPlaying && this.audioContext) {
@@ -338,9 +362,15 @@
       const currentTime = this.getCurrentTime();
       const duration = this.getDuration();
       
+      // 检查是否播放结束
+      if (this.isPlaying && currentTime >= duration) {
+        this.onEnded();
+        return;
+      }
+      
       if (duration > 0) {
         const percent = (currentTime / duration) * 100;
-        this.elements.progress.value = percent;
+        this.elements.progressFill.style.width = `${percent}%`;
         this.elements.currentTime.textContent = this.formatTime(currentTime);
       }
     }
@@ -351,16 +381,23 @@
     }
 
     onEnded() {
+      if (!this.isPlaying) return; // 防止重复调用
+      
       this.isPlaying = false;
       this.pauseTime = 0;
+      this.stopSource();
       this.updatePlayPauseIcon();
       this.stopProgressUpdate();
-      this.updateProgress();
+      
+      // 确保进度显示100%
+      if (this.elements.progressFill && this.audioBuffer) {
+        this.elements.progressFill.style.width = '100%';
+        this.elements.currentTime.textContent = this.formatTime(this.audioBuffer.duration);
+      }
     }
 
     onError(err) {
       console.error('Audio error:', err);
-      this.elements.meta.textContent = 'Failed to load audio';
     }
 
     formatTime(seconds) {
@@ -370,8 +407,25 @@
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    formatFileSize(duration) {
-      return this.formatTime(duration);
+    setVolume(percent) {
+      this.volume = percent / 100;
+      if (this.gainNode) {
+        this.gainNode.gain.value = this.volume;
+      }
+      this.updateVolumeIcon(percent);
+    }
+
+    updateVolumeIcon(percent) {
+      const vol = parseInt(percent);
+      let path = '';
+      if (vol === 0) {
+        path = 'M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
+      } else if (vol < 50) {
+        path = 'M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
+      } else {
+        path = 'M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z';
+      }
+      this.elements.volumeIconPath.setAttribute('d', path);
     }
 
     escapeHTML(str) {
