@@ -505,28 +505,6 @@
     container.className = 'gitpreview-inline-container';
     container.id = 'gitpreview-inline';
 
-    const header = document.createElement('div');
-    header.className = 'gitpreview-inline-header';
-    header.innerHTML = `
-      <div class="gitpreview-inline-title">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-        </svg>
-        ${escapeHTML(filename)}
-      </div>
-      <button class="gitpreview-inline-close" title="Close">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    `;
-
-    header.querySelector('.gitpreview-inline-close').addEventListener('click', () => {
-      closeModal();
-    });
-
-    container.appendChild(header);
-
     const content = document.createElement('div');
     content.className = 'gitpreview-inline-content';
     content.id = 'gitpreview-inline-content';
@@ -550,6 +528,7 @@
       const target = document.querySelector(selector);
       if (target && target.parentElement) {
         target.parentElement.insertBefore(container, target);
+        target.classList.add('gitpreview-blob-target');
         return;
       }
     }
