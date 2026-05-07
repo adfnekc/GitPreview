@@ -644,7 +644,7 @@
     document.addEventListener('keydown', (e) => {
       if (!settings.keyboardShortcuts) return;
 
-      const isPreviewOpen = !!document.getElementById('gitpreview-inline');
+      const isPreviewOpen = !!document.getElementById('gitpreview-inline') || !!document.getElementById('gitpreview-modal-overlay');
 
       if (e.key === 'Escape') {
         if (isPreviewOpen) {
