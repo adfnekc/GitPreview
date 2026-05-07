@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build && cp manifest.json dist/ && cp -r assets dist/",
     "dev": "vite build --watch",
-    "package": "npm run build && python3 -c \"import shutil; shutil.make_archive('gitpreview', 'zip', 'dist')\"",
+    "package": "npm run build && CHROME=$(find ~/.cache/ms-playwright -name 'chrome' -type f 2>/dev/null | head -1) && if [ -f gitpreview.pem ]; then \"$CHROME\" --pack-extension=$PWD/dist --pack-extension-key=$PWD/gitpreview.pem --no-message-box 2>/dev/null; else \"$CHROME\" --pack-extension=$PWD/dist --no-message-box 2>/dev/null && mv dist.pem gitpreview.pem; fi && mv dist.crx gitpreview.crx",
     "clean": "rm -rf dist gitpreview.zip",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
-    "@types/chrome": "^4.0.0",
+    "@types/chrome": "^0.1.0",
     "typescript": "^5.0.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
