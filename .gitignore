@@ -4,3 +4,4 @@ test-results/
 playwright-report/
 tests/e2e/github-auth-state.json
 dist/
+gitpreview.zip
