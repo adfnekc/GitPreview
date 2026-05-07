@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GitPreview - GitHub File Previewer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Preview various file types directly on GitHub without leaving the page.",
   "icons": {
     "16": "assets/icons/icon16.png",
