@@ -138,11 +138,21 @@ export class GitPreviewAudioPlayer {
           </svg>
           <input type="range" id="gitpreview-volume" min="0" max="100" value="100" class="gitpreview-audio-volume-slider">
         </div>
-        <button class="gitpreview-audio-more-btn" id="gitpreview-more" title="More options">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-          </svg>
-        </button>
+        <div class="gitpreview-audio-more-wrapper">
+          <button class="gitpreview-audio-more-btn" id="gitpreview-more" title="More options">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
+          <div class="gitpreview-audio-more-menu" id="gitpreview-more-menu">
+            <button class="gitpreview-audio-menu-item" id="gitpreview-menu-download">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -162,6 +172,8 @@ export class GitPreviewAudioPlayer {
       currentTime: el('#gitpreview-current-time'),
       totalTime: el('#gitpreview-total-time'),
       moreBtn: el('#gitpreview-more'),
+      moreMenu: el('#gitpreview-more-menu'),
+      downloadBtn: el('#gitpreview-menu-download'),
     };
   }
 
@@ -173,6 +185,12 @@ export class GitPreviewAudioPlayer {
       this.setVolume(Number(target.value));
       this.updateVolumeSliderBackground(Number(target.value));
     });
+    this.elements.moreBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleMenu();
+    });
+    this.elements.downloadBtn?.addEventListener('click', () => this.download());
+    document.addEventListener('click', () => this.closeMenu());
     window.addEventListener('resize', () => this.drawWaveform());
     this.updateVolumeSliderBackground(100);
   }
@@ -413,6 +431,32 @@ export class GitPreviewAudioPlayer {
 
   onError(err: unknown): void {
     console.error('Audio error:', err);
+  }
+
+  toggleMenu(): void {
+    const menu = this.elements.moreMenu;
+    if (!menu) return;
+    const isOpen = menu.classList.contains('gitpreview-audio-menu-open');
+    this.closeMenu();
+    if (!isOpen) menu.classList.add('gitpreview-audio-menu-open');
+  }
+
+  closeMenu(): void {
+    this.elements.moreMenu?.classList.remove('gitpreview-audio-menu-open');
+  }
+
+  download(): void {
+    this.closeMenu();
+    const mimeType = getAudioMimeType(this.filename);
+    const blob = new Blob([this.arrayBuffer], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = this.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   formatTime(seconds: number): string {
