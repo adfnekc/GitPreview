@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build && cp manifest.json dist/ && cp -r assets dist/",
     "dev": "vite build --watch",
-    "package": "npm run build && VERSION=$(node -p \"require('./package.json').version\") && CHROME=$(find ~/.cache/ms-playwright -name 'chrome' -type f 2>/dev/null | head -1) && mkdir -p release && if [ -f release/gitpreview.pem ]; then \"$CHROME\" --pack-extension=$PWD/dist --pack-extension-key=$PWD/release/gitpreview.pem --no-message-box 2>/dev/null; else \"$CHROME\" --pack-extension=$PWD/dist --no-message-box 2>/dev/null && mv dist.pem release/gitpreview.pem; fi && mv dist.crx \"release/gitpreview-v$VERSION.crx\" && echo \"Created release/gitpreview-v$VERSION.crx\"",
+    "package": "npm run build && VERSION=$(node -p \"require('./package.json').version\") && CHROME=$(find ~/.cache/ms-playwright -name 'chrome' -type f 2>/dev/null | head -1) && mkdir -p release && if [ -f gitpreview.pem ]; then \"$CHROME\" --pack-extension=$PWD/dist --pack-extension-key=$PWD/gitpreview.pem --no-message-box 2>/dev/null; else \"$CHROME\" --pack-extension=$PWD/dist --no-message-box 2>/dev/null && mv dist.pem gitpreview.pem; fi && mv dist.crx \"release/gitpreview-v$VERSION.crx\" && echo \"Created release/gitpreview-v$VERSION.crx\"",
     "clean": "rm -rf dist gitpreview.zip release/*.crx",
     "test": "vitest run",
     "test:watch": "vitest",
