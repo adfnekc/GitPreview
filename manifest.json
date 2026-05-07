@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "Preview various file types directly on GitHub without leaving the page.",
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
   },
   "permissions": [
     "storage",

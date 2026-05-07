@@ -4,7 +4,7 @@
   "private": true,
   "description": "Preview various file types directly on GitHub without leaving the page.",
   "scripts": {
-    "build": "vite build && cp manifest.json src/icon*.png dist/",
+    "build": "vite build && cp manifest.json dist/ && cp -r assets dist/",
     "dev": "vite build --watch",
     "package": "npm run build && python3 -c \"import shutil; shutil.make_archive('gitpreview', 'zip', 'dist')\"",
     "clean": "rm -rf dist gitpreview.zip",
