@@ -2,7 +2,7 @@ const { test: base, expect, chromium } = require('@playwright/test');
 const path = require('path');
 const fs = require('fs');
 
-const EXT_PATH = path.resolve(__dirname, '../..');
+const EXT_PATH = path.resolve(__dirname, '../../dist');
 const AUTH_FILE = path.join(__dirname, 'github-auth-state.json');
 const hasAuth = fs.existsSync(AUTH_FILE);
 const blobUrl = process.env.TEST_BLOB_URL;

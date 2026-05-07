@@ -6,8 +6,8 @@ const DEFAULT_SETTINGS = {
     audio: true,
     image: true,
     font: true,
-    html: true
-  }
+    html: true,
+  },
 };
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -28,10 +28,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
       });
       return true;
-    case 'getRawFileUrl':
+    case 'getRawFileUrl': {
       const rawUrl = convertToRawUrl(request.url);
       sendResponse({ rawUrl });
       return true;
+    }
     case 'fetchAudio':
       fetchAudio(request.url, sendResponse);
       return true;
@@ -41,25 +42,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-function fetchAudio(url, sendResponse) {
+function fetchAudio(url: string, sendResponse: (response: any) => void): void {
   fetch(url)
-    .then(response => {
+    .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return response.arrayBuffer();
     })
-    .then(arrayBuffer => {
+    .then((arrayBuffer) => {
       const base64 = arrayBufferToBase64(arrayBuffer);
       sendResponse({ success: true, data: base64 });
     })
-    .catch(error => {
+    .catch((error: Error) => {
       console.error('Error fetching audio:', error);
       sendResponse({ success: false, error: error.message });
     });
 }
 
-function arrayBufferToBase64(buffer) {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
   const bytes = new Uint8Array(buffer);
   const len = bytes.byteLength;
@@ -69,14 +70,9 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-function convertToRawUrl(githubUrl) {
-  const urlParts = githubUrl.split('/');
-  const isBlob = urlParts.includes('blob');
-  
-  if (!isBlob) {
-    return githubUrl;
-  }
-  
+function convertToRawUrl(githubUrl: string): string {
+  const isBlob = githubUrl.includes('blob');
+  if (!isBlob) return githubUrl;
   let rawUrl = githubUrl.replace('github.com', 'raw.githubusercontent.com');
   rawUrl = rawUrl.replace('/blob/', '/');
   return rawUrl;

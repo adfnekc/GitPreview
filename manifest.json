@@ -14,8 +14,8 @@
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "js": ["preview/audio-player.js", "content-script.js"],
-      "css": ["preview/preview.css"],
+      "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_idle"
     }
   ],
