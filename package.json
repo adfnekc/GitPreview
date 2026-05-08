@@ -4,7 +4,7 @@
   "private": true,
   "description": "Preview various file types directly on GitHub without leaving the page.",
   "scripts": {
-    "build": "vite build && cp manifest.json dist/ && cp -r assets dist/",
+    "build": "vite build && cp manifest.json dist/ && cp -r assets dist/ && rm -rf dist/pdf-viewer dist/pdfjs && unzip -o vendor/pdfjs-viewer/pdfjs-5.7.284-dist.zip -d dist/pdf-viewer/ > /dev/null && find dist/pdf-viewer -name '*.map' -delete && rm -f dist/pdf-viewer/web/compressed.tracemonkey-pldi-09.pdf && cp src/pdf-viewer-loader.js dist/pdf-viewer/web/pdf-loader.js && sed -i 's|<script src=\"viewer.mjs\" type=\"module\"></script>|<script src=\"viewer.mjs\" type=\"module\"></script><script src=\"pdf-loader.js\" type=\"module\"></script>|' dist/pdf-viewer/web/viewer.html",
     "dev": "vite build --watch",
     "package": "npm run build && VERSION=$(node -p \"require('./package.json').version\") && CHROME=$(find ~/.cache/ms-playwright -name 'chrome' -type f 2>/dev/null | head -1) && mkdir -p release && if [ -f keys/gitpreview.pem ]; then \"$CHROME\" --pack-extension=$PWD/dist --pack-extension-key=$PWD/keys/gitpreview.pem --no-message-box 2>/dev/null; else \"$CHROME\" --pack-extension=$PWD/dist --no-message-box 2>/dev/null && mv dist.pem keys/gitpreview.pem; fi && mv dist.crx \"release/gitpreview-v$VERSION.crx\" && echo \"Created release/gitpreview-v$VERSION.crx\"",
     "clean": "rm -rf dist gitpreview.zip release/*.crx",
@@ -20,5 +20,8 @@
     "typescript": "^5.0.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^5.7.284"
   }
 }

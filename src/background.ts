@@ -39,6 +39,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'fetchBinary':
       fetchAudio(request.url, sendResponse);
       return true;
+    case 'openPdfViewer':
+      chrome.tabs.create({ url: request.viewerUrl });
+      sendResponse({ success: true });
+      return true;
     default:
       sendResponse({ error: 'Unknown action' });
       return false;

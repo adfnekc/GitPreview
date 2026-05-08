@@ -152,8 +152,15 @@ function handleBlobPage(): void {
     const rawBtn = stickyHeader.querySelector<HTMLAnchorElement>(
       'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url, [data-testid*="download"]',
     );
-    if (rawBtn?.parentElement) {
-      rawBtn.parentElement.insertBefore(btn, rawBtn);
+    if (rawBtn) {
+      const btnGroup = rawBtn.closest('.BtnGroup, [class*="BtnGroup"]');
+      if (btnGroup && btnGroup.parentElement) {
+        // rawBtn is wrapped in BtnGroup — insert before the wrapper
+        btnGroup.parentElement.insertBefore(btn, btnGroup);
+      } else if (rawBtn.parentElement) {
+        // rawBtn is directly in the flex container — insert before it
+        rawBtn.parentElement.insertBefore(btn, rawBtn);
+      }
     } else {
       const actions = stickyHeader.querySelector<HTMLElement>('[class*="actions"]');
       if (actions) {
@@ -166,8 +173,13 @@ function handleBlobPage(): void {
     const rawBtn = document.querySelector<HTMLAnchorElement>(
       'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url',
     );
-    if (rawBtn?.parentElement) {
-      rawBtn.parentElement.insertBefore(btn, rawBtn);
+    if (rawBtn) {
+      const btnGroup = rawBtn.closest('.BtnGroup, [class*="BtnGroup"]');
+      if (btnGroup && btnGroup.parentElement) {
+        btnGroup.parentElement.insertBefore(btn, btnGroup);
+      } else if (rawBtn.parentElement) {
+        rawBtn.parentElement.insertBefore(btn, rawBtn);
+      }
     } else {
       const possibleTargets = [
         '[class*="BlobViewHeader-module"]',
