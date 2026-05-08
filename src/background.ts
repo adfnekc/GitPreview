@@ -36,6 +36,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'fetchAudio':
       fetchAudio(request.url, sendResponse);
       return true;
+    case 'fetchBinary':
+      fetchAudio(request.url, sendResponse);
+      return true;
     default:
       sendResponse({ error: 'Unknown action' });
       return false;

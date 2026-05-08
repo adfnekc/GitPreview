@@ -79,7 +79,6 @@ describe('isSupportedExtension', () => {
       'html',
       'png',
       'jpg',
-      'pdf',
       'docx',
       'xlsx',
     ];

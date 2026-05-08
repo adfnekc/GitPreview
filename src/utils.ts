@@ -1,4 +1,5 @@
 export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
+export const PDF_EXTENSIONS = ['pdf'];
 
 export function getFileExtension(path: string): string {
   const filename = path.split('/').pop()!.split('?')[0];
@@ -9,7 +10,8 @@ export function getFileExtension(path: string): string {
 
 export function isSupportedExtension(ext: string | null | undefined): boolean {
   if (!ext) return false;
-  return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
+  const e = ext.toLowerCase();
+  return AUDIO_EXTENSIONS.includes(e) || PDF_EXTENSIONS.includes(e);
 }
 
 export function escapeHTML(str: string | null | undefined): string {

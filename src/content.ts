@@ -14,6 +14,7 @@ import {
   setVolume,
   getVolume,
 } from './preview/audio-player';
+import { openPdfPreview } from './preview/pdf-preview';
 import './preview/preview.css';
 
 let settings = {
@@ -141,55 +142,74 @@ function handleBlobPage(): void {
   const extension = getFileExtension(url);
   if (!isSupportedExtension(extension)) return;
 
-  const filename = url.split('/').pop()!.split('?')[0];
+  const filename = decodeURIComponent(url.split('/').pop()!.split('?')[0]);
 
   const btn = createPreviewButton(url, filename);
   btn.classList.add('gitpreview-blob-preview-btn');
 
-  const rawBtn = document.querySelector<HTMLAnchorElement>(
-    'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url',
-  );
-  if (rawBtn?.parentElement) {
-    rawBtn.parentElement.insertBefore(btn, rawBtn);
-  } else {
-    const possibleTargets = [
-      '[class*="BlobViewHeader-module"]',
-      '[class*="react-blob-header-actions"]',
-      '[class*="react-blob-header-edit-and-raw-actions"]',
-      '.file-actions',
-      '[data-testid="file-header"]',
-      '.react-blob-header',
-      '.Box-header .d-flex',
-      '.Box-header',
-    ];
-
-    let inserted = false;
-    for (const selector of possibleTargets) {
-      const target = document.querySelector(selector);
-      if (target) {
-        target.appendChild(btn);
-        inserted = true;
-        break;
+  const stickyHeader = document.querySelector<HTMLElement>('.react-blob-sticky-header');
+  if (stickyHeader) {
+    const rawBtn = stickyHeader.querySelector<HTMLAnchorElement>(
+      'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url, [data-testid*="download"]',
+    );
+    if (rawBtn?.parentElement) {
+      rawBtn.parentElement.insertBefore(btn, rawBtn);
+    } else {
+      const actions = stickyHeader.querySelector<HTMLElement>('[class*="actions"]');
+      if (actions) {
+        actions.appendChild(btn);
+      } else {
+        stickyHeader.appendChild(btn);
       }
     }
+  } else {
+    const rawBtn = document.querySelector<HTMLAnchorElement>(
+      'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url',
+    );
+    if (rawBtn?.parentElement) {
+      rawBtn.parentElement.insertBefore(btn, rawBtn);
+    } else {
+      const possibleTargets = [
+        '[class*="BlobViewHeader-module"]',
+        '[class*="react-blob-header-actions"]',
+        '[class*="react-blob-header-edit-and-raw-actions"]',
+        '.file-actions',
+        '[data-testid="file-header"]',
+        '.react-blob-header',
+        '.Box-header .d-flex',
+        '.Box-header',
+      ];
 
-    if (!inserted) {
-      const blobHeader = document.querySelector<HTMLElement>(
-        '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]',
-      );
-      if (blobHeader) {
-        blobHeader.appendChild(btn);
-      } else {
-        return;
+      let inserted = false;
+      for (const selector of possibleTargets) {
+        const target = document.querySelector(selector);
+        if (target) {
+          target.appendChild(btn);
+          inserted = true;
+          break;
+        }
+      }
+
+      if (!inserted) {
+        const blobHeader = document.querySelector<HTMLElement>(
+          '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]',
+        );
+        if (blobHeader) {
+          blobHeader.appendChild(btn);
+        } else {
+          return;
+        }
       }
     }
   }
 
-  openPreview(url, filename);
+  if (extension !== 'pdf') {
+    openPreview(url, filename);
 
-  setTimeout(() => {
-    updatePreviewButtonState(btn, true);
-  }, 100);
+    setTimeout(() => {
+      updatePreviewButtonState(btn, true);
+    }, 100);
+  }
 }
 
 function updatePreviewButtonState(
@@ -252,6 +272,13 @@ function createPreviewButton(
 
 function openPreview(fileUrl: string, filename: string): void {
   const rawUrl = convertToRawUrl(fileUrl);
+  const ext = getFileExtension(fileUrl);
+
+  // PDF opens in a new tab using the browser's native PDF viewer
+  if (ext === 'pdf') {
+    openPdfPreview(rawUrl, filename);
+    return;
+  }
 
   if (isTreePage(location.href)) {
     showLoadingModal(filename);
@@ -263,10 +290,10 @@ function openPreview(fileUrl: string, filename: string): void {
     showLoading(filename);
   }
 
-  openAudioPreviewInContainer(rawUrl, filename);
+  openPreviewInContainer(rawUrl, filename, ext);
 }
 
-function openAudioPreviewInContainer(rawUrl: string, filename: string): void {
+function openPreviewInContainer(rawUrl: string, filename: string, ext: string): void {
   let previewContent = getCurrentPreviewContent();
 
   if (!previewContent) {
@@ -283,14 +310,18 @@ function openAudioPreviewInContainer(rawUrl: string, filename: string): void {
     return;
   }
 
-  audioOpenAudioPreview(rawUrl, filename, previewContent).catch((err) => {
-    console.error('GitPreview audio error:', err);
-    if (isTreePage(location.href)) {
-      showErrorModal(filename, (err as Error).message || 'Failed to load audio');
-    } else {
-      showError(filename, (err as Error).message || 'Failed to load audio');
-    }
-  });
+  const isAudio = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext);
+
+  if (isAudio) {
+    audioOpenAudioPreview(rawUrl, filename, previewContent).catch((err) => {
+      console.error('GitPreview audio error:', err);
+      if (isTreePage(location.href)) {
+        showErrorModal(filename, (err as Error).message || 'Failed to load audio');
+      } else {
+        showError(filename, (err as Error).message || 'Failed to load audio');
+      }
+    });
+  }
 }
 
 function closeAll(): void {
