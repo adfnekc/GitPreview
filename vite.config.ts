@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         content: resolve(__dirname, 'src/content.ts'),
         background: resolve(__dirname, 'src/background.ts'),
+        'pdf-viewer-loader': resolve(__dirname, 'src/preview/pdf/pdf-viewer-loader.ts'),
       },
       output: {
         entryFileNames: '[name].js',

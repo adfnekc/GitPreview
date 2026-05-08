@@ -1,3 +1,6 @@
+import { type PreviewHandler } from '../handler';
+import { PDF_EXTENSIONS } from '../../utils';
+
 /**
  * PDF preview powered by PDF.js (https://mozilla.github.io/pdf.js/)
  * PDF.js is licensed under Apache License 2.0
@@ -32,3 +35,14 @@ export function openPdfPreview(rawUrl: string, filename: string): void {
     }
   });
 }
+
+export const pdfHandler: PreviewHandler = {
+  extensions: PDF_EXTENSIONS,
+  opensInNewTab: true,
+  getBlobButtonSelector() {
+    return 'a[data-testid="download-raw-button"], a[data-testid*="download"]';
+  },
+  openPreview(rawUrl: string, filename: string, _container?: HTMLElement) {
+    openPdfPreview(rawUrl, filename);
+  },
+};

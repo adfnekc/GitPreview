@@ -1,4 +1,6 @@
-import { AUDIO_EXTENSIONS, formatTime as _formatTime } from '../utils';
+import { type PreviewHandler } from '../handler';
+import { AUDIO_EXTENSIONS, escapeHTML } from '../../utils';
+import { renderErrorContent } from '../ui';
 
 export function isAudioExtension(ext: string): boolean {
   return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
@@ -17,18 +19,17 @@ function getAudioMimeType(filename: string): string {
   return mimeTypes[ext] || 'audio/mpeg';
 }
 
-function base64ToBlob(base64: string, mimeType: string): Blob {
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const byteString = atob(base64);
   const byteArray = new Uint8Array(byteString.length);
   for (let i = 0; i < byteString.length; i++) {
     byteArray[i] = byteString.charCodeAt(i);
   }
-  return new Blob([byteArray], { type: mimeType });
+  return byteArray.buffer;
 }
 
 function fetchAudioFromBackground(
   url: string,
-  filename: string,
 ): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
@@ -38,15 +39,7 @@ function fetchAudioFromBackground(
           return;
         }
         if (response.success) {
-          const audioBlob = base64ToBlob(response.data, getAudioMimeType(filename));
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve(reader.result as ArrayBuffer);
-          };
-          reader.onerror = () => {
-            reject(new Error('Failed to convert blob to ArrayBuffer'));
-          };
-          reader.readAsArrayBuffer(audioBlob);
+          resolve(base64ToArrayBuffer(response.data));
         } else {
           reject(new Error(response.error || 'Failed to fetch audio'));
         }
@@ -55,12 +48,6 @@ function fetchAudioFromBackground(
       reject(new Error('Chrome runtime not available'));
     }
   });
-}
-
-function escapeHTML(str: string): string {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 export class GitPreviewAudioPlayer {
@@ -79,6 +66,8 @@ export class GitPreviewAudioPlayer {
   elements: Record<string, HTMLElement | null> = {};
   progressUpdateInterval: ReturnType<typeof setInterval> | null = null;
   waveformData: number[] = [];
+  _boundDocumentClick: (() => void) | null = null;
+  _boundWindowResize: (() => void) | null = null;
 
   constructor(options: {
     url: string;
@@ -178,6 +167,8 @@ export class GitPreviewAudioPlayer {
   }
 
   bindEvents(): void {
+    this._boundDocumentClick = () => this.closeMenu();
+    this._boundWindowResize = () => this.drawWaveform();
     this.elements.playPauseBtn?.addEventListener('click', () => this.togglePlay());
     this.elements.progressBar?.addEventListener('click', (e) => this.handleProgressClick(e as MouseEvent));
     this.elements.volume?.addEventListener('input', (e) => {
@@ -190,8 +181,8 @@ export class GitPreviewAudioPlayer {
       this.toggleMenu();
     });
     this.elements.downloadBtn?.addEventListener('click', () => this.download());
-    document.addEventListener('click', () => this.closeMenu());
-    window.addEventListener('resize', () => this.drawWaveform());
+    document.addEventListener('click', this._boundDocumentClick);
+    window.addEventListener('resize', this._boundWindowResize);
     this.updateVolumeSliderBackground(100);
   }
 
@@ -491,6 +482,15 @@ export class GitPreviewAudioPlayer {
   }
 
   destroy(): void {
+    if (this._boundDocumentClick) {
+      document.removeEventListener('click', this._boundDocumentClick);
+      this._boundDocumentClick = null;
+    }
+    if (this._boundWindowResize) {
+      window.removeEventListener('resize', this._boundWindowResize);
+      this._boundWindowResize = null;
+    }
+
     this.pause();
     this.stopProgressUpdate();
 
@@ -548,7 +548,7 @@ export function openAudioPreview(
     </div>
   `;
 
-  return fetchAudioFromBackground(url, filename)
+  return fetchAudioFromBackground(url)
     .then((arrayBuffer) => {
       currentPlayer = new GitPreviewAudioPlayer({
         arrayBuffer,
@@ -590,3 +590,17 @@ export function setVolume(percent: number): void {
 export function getVolume(): number {
   return currentPlayer ? currentPlayer.volume * 100 : 100;
 }
+
+export const audioHandler: PreviewHandler = {
+  extensions: AUDIO_EXTENSIONS,
+  getBlobButtonSelector() {
+    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
+  },
+  openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
+    if (!container) return;
+    openAudioPreview(rawUrl, _filename, container).catch((err) => {
+      console.error('GitPreview audio error:', err);
+      container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load audio');
+    });
+  },
+};
