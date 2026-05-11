@@ -46,6 +46,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       chrome.tabs.create({ url: request.viewerUrl });
       sendResponse({ success: true });
       return true;
+    case 'fetchRange':
+      fetchRange(request.url, request.start, request.end, sendResponse);
+      return true;
     default:
       sendResponse({ error: 'Unknown action' });
       return false;
@@ -83,6 +86,29 @@ function fetchHead(url: string, sendResponse: (response: any) => void): void {
     })
     .catch((error: Error) => {
       console.error('Error fetching HEAD:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+}
+
+function fetchRange(
+  url: string,
+  start: number,
+  end: number,
+  sendResponse: (response: any) => void,
+): void {
+  fetch(url, { headers: { Range: `bytes=${start}-${end}` } })
+    .then((response) => {
+      if (!response.ok && response.status !== 206) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.arrayBuffer();
+    })
+    .then((arrayBuffer) => {
+      const base64 = arrayBufferToBase64(arrayBuffer);
+      sendResponse({ success: true, data: base64, start, end });
+    })
+    .catch((error: Error) => {
+      console.error('Error fetching range:', error);
       sendResponse({ success: false, error: error.message });
     });
 }
