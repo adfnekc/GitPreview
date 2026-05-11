@@ -39,6 +39,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'fetchBinary':
       fetchAudio(request.url, sendResponse);
       return true;
+    case 'fetchHead':
+      fetchHead(request.url, sendResponse);
+      return true;
     case 'openPdfViewer':
       chrome.tabs.create({ url: request.viewerUrl });
       sendResponse({ success: true });
@@ -63,6 +66,23 @@ function fetchAudio(url: string, sendResponse: (response: any) => void): void {
     })
     .catch((error: Error) => {
       console.error('Error fetching audio:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+}
+
+function fetchHead(url: string, sendResponse: (response: any) => void): void {
+  fetch(url, { method: 'HEAD' })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const size = parseInt(response.headers.get('Content-Length') || '0', 10);
+      const acceptsRanges = response.headers.get('Accept-Ranges') === 'bytes';
+      const mimeType = response.headers.get('Content-Type') || '';
+      sendResponse({ success: true, size, acceptsRanges, mimeType });
+    })
+    .catch((error: Error) => {
+      console.error('Error fetching HEAD:', error);
       sendResponse({ success: false, error: error.message });
     });
 }
