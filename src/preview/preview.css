@@ -479,3 +479,111 @@
 .gitpreview-blob-target > :first-child {
   margin-top: 0px !important;
 }
+
+/* ── Video player ─────────────────────────────── */
+
+.gitpreview-video {
+  display: block;
+  background: #000;
+}
+
+.gitpreview-video:focus {
+  outline: none;
+}
+
+/* ── Network warning dialog ───────────────────── */
+
+.gitpreview-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.gitpreview-warning-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.gitpreview-warning-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2328;
+}
+
+.gitpreview-warning-message {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #656d76;
+  line-height: 1.5;
+}
+
+.gitpreview-warning-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.gitpreview-warning-cancel,
+.gitpreview-warning-continue {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.gitpreview-warning-cancel {
+  background: #f6f8fa;
+  border-color: rgba(31, 35, 40, 0.15);
+  color: #24292f;
+}
+
+.gitpreview-warning-continue {
+  background: #0969da;
+  border-color: #0969da;
+  color: #fff;
+}
+
+.gitpreview-warning-continue:hover {
+  background: #0860ca;
+}
+
+/* Dark theme support for warning dialog */
+@media (prefers-color-scheme: dark) {
+  .gitpreview-warning-dialog {
+    background: #161b22;
+    border: 1px solid #30363d;
+  }
+
+  .gitpreview-warning-title {
+    color: #e6edf3;
+  }
+
+  .gitpreview-warning-message {
+    color: #8b949e;
+  }
+
+  .gitpreview-warning-cancel {
+    background: #21262d;
+    border-color: #30363d;
+    color: #c9d1d9;
+  }
+
+  .gitpreview-warning-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
