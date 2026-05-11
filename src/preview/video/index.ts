@@ -23,11 +23,11 @@ export class StreamVideoPlayer {
     this.filename = filename;
   }
 
-  async init(container: HTMLElement): Promise<void> {
+  async init(container: HTMLElement, fileInfo?: FileInfo): Promise<void> {
     this.container = container;
 
     // 获取文件元数据
-    this.fileInfo = await RangeFetcher.getFileInfo(this.url);
+    this.fileInfo = fileInfo || await RangeFetcher.getFileInfo(this.url);
 
     // 创建 video 元素
     this.video = document.createElement('video');
@@ -137,6 +137,7 @@ export class StreamVideoPlayer {
     this.aborted = true;
     if (this.video) {
       this.video.pause();
+      if (this.video.src) URL.revokeObjectURL(this.video.src);
       this.video.remove();
       this.video = null;
     }
@@ -169,9 +170,9 @@ export function openVideoPreview(
             container.innerHTML = renderErrorContent('Loading cancelled on cellular network.');
             return;
           }
-          return doLoad(url, filename, container);
+          return doLoad(url, filename, container, fileInfo);
         })
-      : doLoad(url, filename, container);
+      : doLoad(url, filename, container, fileInfo);
   });
 }
 
@@ -179,6 +180,7 @@ function doLoad(
   url: string,
   filename: string,
   container: HTMLElement,
+  fileInfo: FileInfo,
 ): Promise<void> {
   container.innerHTML = `
     <div class="gitpreview-loading">
@@ -187,7 +189,7 @@ function doLoad(
     </div>`;
 
   currentPlayer = new StreamVideoPlayer(url, filename);
-  return currentPlayer.init(container).catch((err) => {
+  return currentPlayer.init(container, fileInfo).catch((err) => {
     console.error('GitPreview video error:', err);
     container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load video');
   });

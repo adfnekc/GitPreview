@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
     image: true,
     font: true,
     html: true,
+    video: true,
   },
 };
 
@@ -98,8 +99,8 @@ function fetchRange(
 ): void {
   fetch(url, { headers: { Range: `bytes=${start}-${end}` } })
     .then((response) => {
-      if (!response.ok && response.status !== 206) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status !== 206) {
+        throw new Error(`Expected 206 Partial Content, got ${response.status}`);
       }
       return response.arrayBuffer();
     })

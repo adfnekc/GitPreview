@@ -1,6 +1,6 @@
 export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
 export const PDF_EXTENSIONS = ['pdf'];
-export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogg'];
+export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
 
 export function getFileExtension(path: string): string {
   const filename = path.split('/').pop()!.split('?')[0];
