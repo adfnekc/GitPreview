@@ -29,6 +29,9 @@ export class StreamVideoPlayer {
     // 获取文件元数据
     this.fileInfo = fileInfo || await RangeFetcher.getFileInfo(this.url);
 
+    // 清空之前的 loading 内容
+    container.innerHTML = '';
+
     // 创建 video 元素
     this.video = document.createElement('video');
     this.video.className = 'gitpreview-video';
@@ -182,6 +185,10 @@ function doLoad(
   container: HTMLElement,
   fileInfo: FileInfo,
 ): Promise<void> {
+  // 隐藏 GitHub 的大文件提示（View raw / Sorry...）
+  const blobTarget = document.querySelector('.gitpreview-blob-target');
+  if (blobTarget) (blobTarget as HTMLElement).style.display = 'none';
+
   container.innerHTML = `
     <div class="gitpreview-loading">
       <div class="gitpreview-spinner"></div>
