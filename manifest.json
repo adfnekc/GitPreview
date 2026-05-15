@@ -10,12 +10,22 @@
   },
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "https://github.com/*",
     "https://raw.githubusercontent.com/*"
   ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "csp_media",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
