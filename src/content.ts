@@ -3,6 +3,7 @@ import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
 import { videoHandler } from './preview/video/index';
 import { fontHandler } from './preview/font/index';
+import { wordHandler } from './preview/word/index';
 import { registerHandler, getHandler, isSupported } from './preview/registry';
 import {
   createPreviewButton,
@@ -16,6 +17,7 @@ import {
 import { closeAudioPreview } from './preview/audio/index';
 import { closeVideoPreview } from './preview/video/index';
 import { closeFontPreview } from './preview/font/index';
+import { closeWordPreview } from './preview/word/index';
 import {
   togglePlay,
   rewind,
@@ -33,6 +35,7 @@ registerHandler(audioHandler);
 registerHandler(pdfHandler);
 registerHandler(videoHandler);
 registerHandler(fontHandler);
+registerHandler(wordHandler);
 
 let settings = {
   autoPreview: true,
@@ -294,6 +297,7 @@ function closeAll(): void {
   closeAudioPreview();
   closeVideoPreview();
   closeFontPreview();
+  closeWordPreview();
   removeExistingPlayer();
   removeExistingModal();
 

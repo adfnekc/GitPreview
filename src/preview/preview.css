@@ -835,3 +835,229 @@
     color: #e6edf3;
   }
 }
+
+/* ── Word preview ─────────────────────────── */
+
+.gitpreview-word-preview {
+  padding: 0;
+}
+
+.gitpreview-word-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+}
+
+.gitpreview-word-header-icon {
+  width: 24px;
+  height: 24px;
+  color: #1f2328;
+  flex-shrink: 0;
+}
+
+.gitpreview-word-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.gitpreview-word-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2328;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitpreview-word-meta {
+  font-size: 12px;
+  color: #656d76;
+  margin-top: 2px;
+}
+
+.gitpreview-word-actions {
+  flex-shrink: 0;
+}
+
+.gitpreview-word-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #1f2328;
+  background: #f6f8fa;
+  border: 1px solid rgba(31, 35, 40, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.gitpreview-word-download-btn:hover {
+  background: #f3f4f6;
+}
+
+.gitpreview-word-download-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.gitpreview-word-body {
+  padding: 24px 32px;
+  overflow-x: auto;
+  line-height: 1.6;
+  color: #1f2328;
+  font-size: 14px;
+}
+
+.gitpreview-word-body h1,
+.gitpreview-word-body h2,
+.gitpreview-word-body h3,
+.gitpreview-word-body h4 {
+  margin: 24px 0 12px 0;
+  font-weight: 600;
+  color: #1f2328;
+}
+
+.gitpreview-word-body h1 { font-size: 24px; }
+.gitpreview-word-body h2 { font-size: 20px; }
+.gitpreview-word-body h3 { font-size: 16px; }
+.gitpreview-word-body h4 { font-size: 14px; }
+
+.gitpreview-word-body p {
+  margin: 0 0 12px 0;
+}
+
+.gitpreview-word-body img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #d1d9e0;
+  border-radius: 4px;
+  margin: 12px 0;
+}
+
+.gitpreview-word-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.gitpreview-word-body th,
+.gitpreview-word-body td {
+  border: 1px solid #d1d9e0;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.gitpreview-word-body th {
+  background: #f6f8fa;
+  font-weight: 600;
+}
+
+.gitpreview-word-body ul,
+.gitpreview-word-body ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.gitpreview-word-body li {
+  margin: 4px 0;
+}
+
+.gitpreview-word-body a {
+  color: #0969da;
+  text-decoration: none;
+}
+
+.gitpreview-word-body a:hover {
+  text-decoration: underline;
+}
+
+.gitpreview-word-body blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-left: 3px solid #d1d9e0;
+  color: #656d76;
+  background: #f6f8fa;
+  border-radius: 0 4px 4px 0;
+}
+
+.gitpreview-word-body hr {
+  border: none;
+  border-top: 1px solid #d1d9e0;
+  margin: 24px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gitpreview-word-header {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .gitpreview-word-header-icon {
+    color: #e6edf3;
+  }
+
+  .gitpreview-word-filename {
+    color: #e6edf3;
+  }
+
+  .gitpreview-word-meta {
+    color: #8b949e;
+  }
+
+  .gitpreview-word-download-btn {
+    color: #c9d1d9;
+    background: #21262d;
+    border-color: #30363d;
+  }
+
+  .gitpreview-word-download-btn:hover {
+    background: #30363d;
+  }
+
+  .gitpreview-word-body {
+    color: #e6edf3;
+  }
+
+  .gitpreview-word-body h1,
+  .gitpreview-word-body h2,
+  .gitpreview-word-body h3,
+  .gitpreview-word-body h4 {
+    color: #e6edf3;
+  }
+
+  .gitpreview-word-body img {
+    border-color: #30363d;
+  }
+
+  .gitpreview-word-body th,
+  .gitpreview-word-body td {
+    border-color: #30363d;
+  }
+
+  .gitpreview-word-body th {
+    background: #161b22;
+  }
+
+  .gitpreview-word-body a {
+    color: #58a6ff;
+  }
+
+  .gitpreview-word-body blockquote {
+    border-left-color: #30363d;
+    color: #8b949e;
+    background: #161b22;
+  }
+
+  .gitpreview-word-body hr {
+    border-top-color: #30363d;
+  }
+}
