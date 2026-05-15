@@ -85,25 +85,61 @@ function observePageChanges(): void {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // SPA navigation detection: popstate (back/forward) + polling (pushState)
   let lastUrl = location.href;
+  window.addEventListener('popstate', () => {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      onUrlChanged();
+    }
+  });
+
   setInterval(() => {
     const url = location.href;
     if (url !== lastUrl) {
       lastUrl = url;
-      closeAll();
-      document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
-        el.classList.remove('gitpreview-link-processed');
-      });
-      document.querySelectorAll('.gitpreview-preview-btn').forEach((el) => {
-        el.remove();
-      });
-      document.querySelectorAll('.gitpreview-blob-preview-btn').forEach((el) => {
-        el.remove();
-      });
-      debounce(addPreviewButtons, 500)();
-      debounce(handleBlobPage, 500)();
+      onUrlChanged();
     }
   }, 1000);
+}
+
+function onUrlChanged(): void {
+  closeAll();
+  document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
+    el.classList.remove('gitpreview-link-processed');
+  });
+  document.querySelectorAll('.gitpreview-blob-target').forEach((el) => {
+    el.classList.remove('gitpreview-blob-target');
+    (el as HTMLElement).style.display = '';
+  });
+  document.querySelectorAll('.gitpreview-preview-btn').forEach((el) => {
+    el.remove();
+  });
+  document.querySelectorAll('.gitpreview-blob-preview-btn').forEach((el) => {
+    el.remove();
+  });
+
+  addPreviewButtons();
+  retryBlobPage();
+}
+
+function retryBlobPage(maxRetries = 8, interval = 400): void {
+  if (!isBlobPage(location.href)) return;
+  let retries = maxRetries;
+
+  function tryHandle(): void {
+    if (!isBlobPage(location.href)) return;
+    if (document.querySelector('.gitpreview-blob-preview-btn')) return;
+
+    handleBlobPage();
+
+    if (!document.querySelector('.gitpreview-blob-preview-btn') && retries > 0) {
+      retries--;
+      setTimeout(tryHandle, interval);
+    }
+  }
+
+  tryHandle();
 }
 
 function debounce<T extends (...args: any[]) => void>(
@@ -251,6 +287,11 @@ function closeAll(): void {
   closeVideoPreview();
   removeExistingPlayer();
   removeExistingModal();
+
+  // Restore hidden blob targets so SPA navigation content is visible
+  document.querySelectorAll('.gitpreview-blob-target').forEach((el) => {
+    (el as HTMLElement).style.display = '';
+  });
 
   document.querySelectorAll('.gitpreview-preview-btn').forEach((btn) => {
     updatePreviewButtonState(btn as HTMLElement, false);
