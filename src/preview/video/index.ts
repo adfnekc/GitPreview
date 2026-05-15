@@ -48,7 +48,7 @@ export class StreamVideoPlayer {
     if (!this.video || !this.fileInfo) return;
 
     this.mediaSource = new MediaSource();
-    this.video.srcObject = this.mediaSource;
+    this.video.src = URL.createObjectURL(this.mediaSource);
 
     this.mediaSource.addEventListener('sourceopen', async () => {
       if (!this.mediaSource || !this.fileInfo) return;
@@ -130,14 +130,14 @@ export class StreamVideoPlayer {
     });
 
     const blob = new Blob([arrayBuffer], { type: this.fileInfo?.mimeType || 'video/mp4' });
-    this.video!.srcObject = blob;
+    this.video!.src = URL.createObjectURL(blob);
   }
 
   destroy(): void {
     this.aborted = true;
     if (this.video) {
       this.video.pause();
-      this.video.srcObject = null;
+      if (this.video.src) URL.revokeObjectURL(this.video.src);
       this.video.remove();
       this.video = null;
     }
