@@ -85,22 +85,27 @@ function observePageChanges(): void {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // SPA navigation detection: popstate (back/forward) + polling (pushState)
+  // SPA navigation detection: popstate (back/forward) + rAF polling (pushState)
   let lastUrl = location.href;
-  window.addEventListener('popstate', () => {
+  window.addEventListener('popstate', onNav);
+
+  function onNav(): void {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       onUrlChanged();
     }
-  });
+  }
 
-  setInterval(() => {
-    const url = location.href;
-    if (url !== lastUrl) {
-      lastUrl = url;
+  // requestAnimationFrame detects URL changes before next paint (~16ms)
+  // vs. setInterval at 1000ms where new content renders before we clean up
+  function pollUrl(): void {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
       onUrlChanged();
     }
-  }, 1000);
+    requestAnimationFrame(pollUrl);
+  }
+  requestAnimationFrame(pollUrl);
 }
 
 function onUrlChanged(): void {
