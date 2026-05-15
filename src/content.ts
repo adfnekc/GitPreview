@@ -4,6 +4,8 @@ import { pdfHandler } from './preview/pdf/index';
 import { videoHandler } from './preview/video/index';
 import { fontHandler } from './preview/font/index';
 import { wordHandler } from './preview/word/index';
+import { excelHandler } from './preview/excel/index';
+import { powerPointHandler } from './preview/powerpoint/index';
 import { registerHandler, getHandler, isSupported } from './preview/registry';
 import {
   createPreviewButton,
@@ -18,6 +20,8 @@ import { closeAudioPreview } from './preview/audio/index';
 import { closeVideoPreview } from './preview/video/index';
 import { closeFontPreview } from './preview/font/index';
 import { closeWordPreview } from './preview/word/index';
+import { closeExcelPreview } from './preview/excel/index';
+import { closePowerPointPreview } from './preview/powerpoint/index';
 import {
   togglePlay,
   rewind,
@@ -36,6 +40,8 @@ registerHandler(pdfHandler);
 registerHandler(videoHandler);
 registerHandler(fontHandler);
 registerHandler(wordHandler);
+registerHandler(excelHandler);
+registerHandler(powerPointHandler);
 
 let settings = {
   autoPreview: true,
@@ -298,6 +304,8 @@ function closeAll(): void {
   closeVideoPreview();
   closeFontPreview();
   closeWordPreview();
+  closeExcelPreview();
+  closePowerPointPreview();
   removeExistingPlayer();
   removeExistingModal();
 

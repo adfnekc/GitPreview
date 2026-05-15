@@ -79,7 +79,6 @@ describe('isSupportedExtension', () => {
       'html',
       'png',
       'jpg',
-      'xlsx',
     ];
     unsupportedExtensions.forEach((ext) => {
       expect(isSupportedExtension(ext)).toBe(false);

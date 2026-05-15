@@ -1061,3 +1061,254 @@
     border-top-color: #30363d;
   }
 }
+
+/* ── Excel preview ─────────────────────────── */
+
+.gitpreview-excel-preview {
+  padding: 0;
+}
+
+.gitpreview-excel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+}
+
+.gitpreview-excel-header-icon {
+  width: 24px;
+  height: 24px;
+  color: #1f2328;
+  flex-shrink: 0;
+}
+
+.gitpreview-excel-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.gitpreview-excel-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2328;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitpreview-excel-meta {
+  font-size: 12px;
+  color: #656d76;
+  margin-top: 2px;
+}
+
+.gitpreview-excel-tabs {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+  padding: 0 16px;
+  gap: 2px;
+}
+
+.gitpreview-excel-tab {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #656d76;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.gitpreview-excel-tab:hover {
+  color: #1f2328;
+}
+
+.gitpreview-excel-tab-active {
+  color: #0969da;
+  border-bottom-color: #0969da;
+  font-weight: 600;
+}
+
+.gitpreview-excel-body {
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.gitpreview-excel-sheet {
+  display: none;
+}
+
+.gitpreview-excel-sheet-active {
+  display: block;
+}
+
+.gitpreview-excel-body table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.gitpreview-excel-body th,
+.gitpreview-excel-body td {
+  border: 1px solid #d1d9e0;
+  padding: 6px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.gitpreview-excel-body th {
+  background: #f6f8fa;
+  font-weight: 600;
+  color: #24292f;
+  position: sticky;
+  top: 0;
+}
+
+.gitpreview-excel-body td {
+  color: #1f2328;
+}
+
+/* ── PowerPoint preview ────────────────────── */
+
+.gitpreview-ppt-preview {
+  padding: 0;
+}
+
+.gitpreview-ppt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+}
+
+.gitpreview-ppt-header-icon {
+  width: 24px;
+  height: 24px;
+  color: #1f2328;
+  flex-shrink: 0;
+}
+
+.gitpreview-ppt-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.gitpreview-ppt-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2328;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitpreview-ppt-meta {
+  font-size: 12px;
+  color: #656d76;
+  margin-top: 2px;
+}
+
+.gitpreview-ppt-slide-wrapper {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  background: #f6f8fa;
+  min-height: 300px;
+}
+
+.gitpreview-ppt-slide-wrapper > div {
+  max-width: 100%;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gitpreview-ppt-slide-wrapper canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Dark theme overrides */
+@media (prefers-color-scheme: dark) {
+  .gitpreview-excel-header {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .gitpreview-excel-header-icon {
+    color: #e6edf3;
+  }
+
+  .gitpreview-excel-filename {
+    color: #e6edf3;
+  }
+
+  .gitpreview-excel-meta {
+    color: #8b949e;
+  }
+
+  .gitpreview-excel-tabs {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .gitpreview-excel-tab {
+    color: #8b949e;
+  }
+
+  .gitpreview-excel-tab:hover {
+    color: #e6edf3;
+  }
+
+  .gitpreview-excel-tab-active {
+    color: #58a6ff;
+    border-bottom-color: #58a6ff;
+  }
+
+  .gitpreview-excel-body th,
+  .gitpreview-excel-body td {
+    border-color: #30363d;
+  }
+
+  .gitpreview-excel-body th {
+    background: #161b22;
+    color: #e6edf3;
+  }
+
+  .gitpreview-excel-body td {
+    color: #e6edf3;
+  }
+
+  .gitpreview-ppt-header {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .gitpreview-ppt-header-icon {
+    color: #e6edf3;
+  }
+
+  .gitpreview-ppt-filename {
+    color: #e6edf3;
+  }
+
+  .gitpreview-ppt-meta {
+    color: #8b949e;
+  }
+
+  .gitpreview-ppt-slide-wrapper {
+    background: #0d1117;
+  }
+}

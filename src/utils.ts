@@ -3,6 +3,8 @@ export const PDF_EXTENSIONS = ['pdf'];
 export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
 export const FONT_EXTENSIONS = ['ttf', 'otf', 'woff', 'woff2'];
 export const WORD_EXTENSIONS = ['docx'];
+export const EXCEL_EXTENSIONS = ['xlsx', 'xls'];
+export const PPT_EXTENSIONS = ['pptx', 'ppt'];
 
 export function getFileExtension(path: string): string {
   const filename = path.split('/').pop()!.split('?')[0];
@@ -14,7 +16,7 @@ export function getFileExtension(path: string): string {
 export function isSupportedExtension(ext: string | null | undefined): boolean {
   if (!ext) return false;
   const e = ext.toLowerCase();
-  return AUDIO_EXTENSIONS.includes(e) || PDF_EXTENSIONS.includes(e) || VIDEO_EXTENSIONS.includes(e) || FONT_EXTENSIONS.includes(e) || WORD_EXTENSIONS.includes(e);
+  return AUDIO_EXTENSIONS.includes(e) || PDF_EXTENSIONS.includes(e) || VIDEO_EXTENSIONS.includes(e) || FONT_EXTENSIONS.includes(e) || WORD_EXTENSIONS.includes(e) || EXCEL_EXTENSIONS.includes(e) || PPT_EXTENSIONS.includes(e);
 }
 
 export function escapeHTML(str: string | null | undefined): string {
