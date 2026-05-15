@@ -1,11 +1,14 @@
 # GitPreview
 
-Preview audio files directly on GitHub without leaving the page.
+Preview various file types directly on GitHub without leaving the page.
 
 ## Features
 
-- **Inline preview** — Play audio files on blob pages with a waveform visualizer
-- **Modal preview** — Preview files from tree/directory pages without navigating away
+- **Audio preview** — Play audio files (mp3, wav, ogg, m4a, flac, aac) with waveform visualizer
+- **Video preview** — Play video files (mp4, webm, mov, avi, mkv) with streaming chunked loading via MediaSource API
+- **PDF preview** — View PDF files using PDF.js viewer in a new tab
+- **Network-aware loading** — Detects cellular/metered connections and warns before loading files over 5MB
+- **Inline & Modal preview** — Preview on blob pages inline, or from tree pages in a modal
 - **Keyboard shortcuts** — Space (play/pause), arrows (seek, volume)
 - **Download** — Save audio files directly from the preview player
 
@@ -23,13 +26,14 @@ Install from the Chrome Web Store, or load unpacked from `dist/`:
 ```bash
 npm run build     # Build extension to dist/
 npm run dev       # Watch mode
-npm test          # Run unit tests
+npm test          # Run unit tests (60+ tests)
 npm run clean     # Remove dist/
+npm run package   # Build and package CRX
 ```
 
 ### Smoke Tests
 
-Requires a GitHub session and a repo with audio files:
+Requires a GitHub session and a repo with supported files:
 
 ```bash
 npm run test:e2e:setup
