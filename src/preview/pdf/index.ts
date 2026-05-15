@@ -40,7 +40,7 @@ export const pdfHandler: PreviewHandler = {
   extensions: PDF_EXTENSIONS,
   opensInNewTab: true,
   getBlobButtonSelector() {
-    return 'a[data-testid="download-raw-button"], a[data-testid*="download"]';
+    return 'button[data-testid="download-raw-button"]';
   },
   openPreview(rawUrl: string, filename: string, _container?: HTMLElement) {
     openPdfPreview(rawUrl, filename);
