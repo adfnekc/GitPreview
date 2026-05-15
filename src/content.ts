@@ -2,6 +2,7 @@ import { isBlobPage, getFileExtension } from './utils';
 import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
 import { videoHandler } from './preview/video/index';
+import { fontHandler } from './preview/font/index';
 import { registerHandler, getHandler, isSupported } from './preview/registry';
 import {
   createPreviewButton,
@@ -14,6 +15,7 @@ import {
 } from './preview/ui';
 import { closeAudioPreview } from './preview/audio/index';
 import { closeVideoPreview } from './preview/video/index';
+import { closeFontPreview } from './preview/font/index';
 import {
   togglePlay,
   rewind,
@@ -30,6 +32,7 @@ import './preview/preview.css';
 registerHandler(audioHandler);
 registerHandler(pdfHandler);
 registerHandler(videoHandler);
+registerHandler(fontHandler);
 
 let settings = {
   autoPreview: true,
@@ -290,6 +293,7 @@ function openPreview(fileUrl: string, filename: string): void {
 function closeAll(): void {
   closeAudioPreview();
   closeVideoPreview();
+  closeFontPreview();
   removeExistingPlayer();
   removeExistingModal();
 

@@ -421,6 +421,7 @@
   max-width: 800px;
   max-height: 80vh;
   background-color: #ffffff;
+  border: 1px solid #d1d9e0;
   border-radius: 8px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -564,6 +565,33 @@
 
 /* Dark theme support for warning dialog */
 @media (prefers-color-scheme: dark) {
+  .gitpreview-modal-container {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+
+  .gitpreview-modal-header {
+    background: #161b22;
+    border-bottom-color: #30363d;
+  }
+
+  .gitpreview-modal-title {
+    color: #e6edf3;
+  }
+
+  .gitpreview-modal-close {
+    color: #8b949e;
+  }
+
+  .gitpreview-modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #e6edf3;
+  }
+
+  .gitpreview-modal-content {
+    background: #0d1117;
+  }
+
   .gitpreview-warning-dialog {
     background: #161b22;
     border: 1px solid #30363d;
@@ -585,5 +613,225 @@
 
   .gitpreview-warning-overlay {
     background: rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ── Font preview ──────────────────────────── */
+
+.gitpreview-font-preview {
+  padding: 0;
+}
+
+.gitpreview-font-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #d1d9e0;
+  background: #f6f8fa;
+}
+
+.gitpreview-font-header-icon {
+  width: 24px;
+  height: 24px;
+  color: #1f2328;
+  flex-shrink: 0;
+}
+
+.gitpreview-font-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.gitpreview-font-weight-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.gitpreview-font-weight-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #656d76;
+}
+
+.gitpreview-font-weight-slider {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #0969da 0%, #0969da 50%, #d1d9e0 50%, #d1d9e0 100%);
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+}
+
+.gitpreview-font-weight-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #0969da;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.gitpreview-font-weight-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2328;
+  min-width: 24px;
+  text-align: center;
+}
+
+.gitpreview-font-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2328;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitpreview-font-meta {
+  font-size: 12px;
+  color: #656d76;
+  margin-top: 2px;
+}
+
+.gitpreview-font-body {
+  padding: 16px;
+}
+
+.gitpreview-font-section {
+  margin-bottom: 20px;
+}
+
+.gitpreview-font-section:last-child {
+  margin-bottom: 0;
+}
+
+.gitpreview-font-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #656d76;
+  margin-bottom: 8px;
+}
+
+.gitpreview-font-samples {
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.gitpreview-font-sample-row {
+  word-break: break-all;
+  color: #1f2328;
+}
+
+.gitpreview-font-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1f2328;
+  background: #f6f8fa;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  outline: none;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.gitpreview-font-input:focus {
+  border-color: #0969da;
+  box-shadow: inset 0 0 0 1px #0969da;
+  background: #ffffff;
+}
+
+.gitpreview-font-custom {
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  word-break: break-all;
+  color: #1f2328;
+  min-height: 3em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gitpreview-font-header {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .gitpreview-font-header-icon {
+    color: #e6edf3;
+  }
+
+  .gitpreview-font-filename {
+    color: #e6edf3;
+  }
+
+  .gitpreview-font-meta {
+    color: #8b949e;
+  }
+
+  .gitpreview-font-weight-label {
+    color: #8b949e;
+  }
+
+  .gitpreview-font-weight-slider {
+    background: linear-gradient(to right, #2f81f7 0%, #2f81f7 50%, #30363d 50%, #30363d 100%);
+  }
+
+  .gitpreview-font-weight-slider::-webkit-slider-thumb {
+    background: #2f81f7;
+    border-color: #0d1117;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .gitpreview-font-weight-value {
+    color: #e6edf3;
+  }
+
+  .gitpreview-font-section-title {
+    color: #8b949e;
+  }
+
+  .gitpreview-font-samples {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+
+  .gitpreview-font-sample-row {
+    color: #e6edf3;
+  }
+
+  .gitpreview-font-input {
+    background: #161b22;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+
+  .gitpreview-font-input:focus {
+    border-color: #2f81f7;
+    box-shadow: inset 0 0 0 1px #2f81f7;
+    background: #0d1117;
+  }
+
+  .gitpreview-font-custom {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
   }
 }
