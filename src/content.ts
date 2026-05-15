@@ -90,6 +90,7 @@ function observePageChanges(): void {
     const url = location.href;
     if (url !== lastUrl) {
       lastUrl = url;
+      closeAll();
       document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
         el.classList.remove('gitpreview-link-processed');
       });
