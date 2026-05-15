@@ -201,10 +201,11 @@ export function showLoading(filename: string): void {
   insertInlineContainer(container);
 }
 
-export function showLoadingModal(filename: string): void {
+export function showLoadingModal(filename: string, onClose?: () => void): void {
   removeExistingModal();
   const overlay = createModalContainer(filename, () => {
-    /* no-op, caller handles closeAll */ });
+    onClose?.();
+  });
   const content =
     overlay.querySelector<HTMLElement>('#gitpreview-modal-content')!;
   content.innerHTML = `
@@ -224,10 +225,11 @@ export function showError(filename: string, message: string): void {
   insertInlineContainer(container);
 }
 
-export function showErrorModal(filename: string, message: string): void {
+export function showErrorModal(filename: string, message: string, onClose?: () => void): void {
   removeExistingModal();
   const overlay = createModalContainer(filename, () => {
-    /* no-op, caller handles closeAll */ });
+    onClose?.();
+  });
   const content =
     overlay.querySelector<HTMLElement>('#gitpreview-modal-content')!;
   content.innerHTML = renderErrorContent(message);

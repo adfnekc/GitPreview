@@ -228,9 +228,9 @@ function openPreview(fileUrl: string, filename: string): void {
     return;
   }
 
-  // Container-based handlers (audio)
+  // Container-based handlers (audio, video)
   if (isTreePage(location.href)) {
-    showLoadingModal(filename);
+    showLoadingModal(filename, closeAll);
   } else {
     if (document.getElementById('gitpreview-inline')) {
       closeAll();
