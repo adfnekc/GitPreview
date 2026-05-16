@@ -93,7 +93,6 @@ export async function openPowerPointPreview(
     const wrapper = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-wrapper');
     if (!wrapper) return;
 
-    // Determine viewport width
     const viewport = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-viewport');
     const viewportWidth = viewport ? viewport.clientWidth - 4 : 800;
 
@@ -101,10 +100,53 @@ export async function openPowerPointPreview(
       renderer: 'canvas',
       mode: 'slide',
       width: viewportWidth,
+      height: viewport ? Math.max(viewport.clientHeight - 4, 400) : 600,
     });
 
     currentPreviewer = previewer;
     await previewer.preview(arrayBuffer);
+
+    // Remove built-in nav buttons from pptx-preview, keep only the slide
+    const ppWrapper = wrapper.querySelector<HTMLElement>('.pptx-preview-wrapper');
+    if (ppWrapper) {
+      // Remove all children except the slide wrapper
+      const slides = ppWrapper.querySelectorAll<HTMLElement>('[class*="pptx-preview-slide-wrapper"]');
+      ppWrapper.querySelectorAll('.pptx-preview-wrapper-next, .pptx-preview-wrapper-pagination, .pptx-preview-wrapper-pre').forEach((el) => el.remove());
+    }
+
+    // After render, scale slide to fit viewport
+    const fitSlideToViewport = () => {
+      if (!ppWrapper) return;
+      const slideEl = ppWrapper.querySelector<HTMLElement>('[class*="pptx-preview-slide-wrapper"]');
+      if (!slideEl || !viewport) return;
+
+      const rect = slideEl.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const vpRect = viewport.getBoundingClientRect();
+      const availW = vpRect.width - 16;
+      const availH = vpRect.height - 16;
+      if (availW <= 0 || availH <= 0) return;
+
+      const scale = Math.min(availW / rect.width, availH / rect.height, 1);
+
+      ppWrapper.style.width = '';
+      ppWrapper.style.height = '';
+      ppWrapper.style.background = 'transparent';
+      ppWrapper.style.margin = '0';
+      ppWrapper.style.overflow = 'visible';
+
+      slideEl.style.position = 'relative';
+      slideEl.style.top = 'auto';
+      slideEl.style.left = 'auto';
+      slideEl.style.transformOrigin = '0 0';
+      slideEl.style.transform = `scale(${scale})`;
+
+      ppWrapper.style.width = `${rect.width * scale}px`;
+      ppWrapper.style.height = `${rect.height * scale}px`;
+    };
+
+    fitSlideToViewport();
 
     const slideCount = previewer.slideCount || 0;
     const meta = container.querySelector('.gitpreview-ppt-meta');
@@ -130,12 +172,14 @@ export async function openPowerPointPreview(
     prevBtn?.addEventListener('click', () => {
       if (!previewer) return;
       previewer.renderPreSlide();
+      fitSlideToViewport();
       updatePage();
     });
 
     nextBtn?.addEventListener('click', () => {
       if (!previewer) return;
       previewer.renderNextSlide();
+      fitSlideToViewport();
       updatePage();
     });
 
@@ -165,7 +209,10 @@ export async function openPowerPointPreview(
         fullIcon!.style.display = '';
         exitIcon!.style.display = 'none';
       }
+      // Re-fit after fullscreen transition
+      setTimeout(fitSlideToViewport, 100);
     });
+    window.addEventListener('resize', fitSlideToViewport);
 
     // Download
     const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
@@ -187,10 +234,12 @@ export async function openPowerPointPreview(
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault();
         previewer.renderNextSlide();
+        fitSlideToViewport();
         updatePage();
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault();
         previewer.renderPreSlide();
+        fitSlideToViewport();
         updatePage();
       } else if (e.key === 'Escape' && document.fullscreenElement) {
         document.exitFullscreen();

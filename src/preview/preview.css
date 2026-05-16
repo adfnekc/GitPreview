@@ -1264,22 +1264,31 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
-  min-height: 300px;
-  overflow: auto;
+  padding: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
 .gitpreview-ppt-slide-wrapper {
   display: flex;
   justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Override pptx-preview's black background */
+.gitpreview-ppt-slide-wrapper .pptx-preview-wrapper {
+  background: transparent !important;
 }
 
 .gitpreview-ppt-slide-wrapper canvas {
   display: block;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
   max-width: 100%;
-  height: auto;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .gitpreview-ppt-controls {
@@ -1333,7 +1342,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 40px;
 }
 
 .gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-slide-viewport {
@@ -1341,7 +1349,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
+  padding: 8px;
   width: 100%;
   height: 100%;
 }
