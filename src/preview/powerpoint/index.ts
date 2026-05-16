@@ -4,6 +4,8 @@ import { renderErrorContent } from '../ui';
 import { init } from 'pptx-preview';
 
 let currentPreviewer: any = null;
+let currentContainer: HTMLElement | null = null;
+let _boundKeydown: ((e: KeyboardEvent) => void) | null = null;
 
 export async function openPowerPointPreview(
   url: string,
@@ -40,6 +42,7 @@ export async function openPowerPointPreview(
     });
 
     const ext = filename.split('.').pop()?.toLowerCase() || 'pptx';
+    currentContainer = container;
 
     container.innerHTML = `
       <div class="gitpreview-ppt-preview">
@@ -51,26 +54,151 @@ export async function openPowerPointPreview(
             <div class="gitpreview-ppt-filename">${escapeHTML(filename)}</div>
             <div class="gitpreview-ppt-meta">${formatFileSize(arrayBuffer.byteLength)} · ${ext.toUpperCase()} presentation</div>
           </div>
+          <div class="gitpreview-ppt-header-actions">
+            <button class="gitpreview-ppt-btn gitpreview-ppt-btn-download" title="Download PPTX">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </button>
+            <button class="gitpreview-ppt-btn gitpreview-ppt-btn-fullscreen" title="Fullscreen">
+              <svg class="gitpreview-ppt-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              <svg class="gitpreview-ppt-fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div class="gitpreview-ppt-slide-wrapper"></div>
+        <div class="gitpreview-ppt-slide-container">
+          <div class="gitpreview-ppt-slide-viewport">
+            <div class="gitpreview-ppt-slide-wrapper"></div>
+          </div>
+          <div class="gitpreview-ppt-controls">
+            <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-prev" title="Previous slide">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span class="gitpreview-ppt-page-indicator" id="gitpreview-ppt-page">1 / 1</span>
+            <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-next" title="Next slide">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>`;
 
     const wrapper = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-wrapper');
     if (!wrapper) return;
 
+    // Determine viewport width
+    const viewport = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-viewport');
+    const viewportWidth = viewport ? viewport.clientWidth - 4 : 800;
+
     const previewer = init(wrapper, {
       renderer: 'canvas',
       mode: 'slide',
+      width: viewportWidth,
     });
 
     currentPreviewer = previewer;
     await previewer.preview(arrayBuffer);
 
-    // Update header with slide count
+    const slideCount = previewer.slideCount || 0;
     const meta = container.querySelector('.gitpreview-ppt-meta');
-    if (meta && previewer.slideCount) {
-      meta.textContent = `${formatFileSize(arrayBuffer.byteLength)} · ${ext.toUpperCase()} presentation · ${previewer.slideCount} slide(s)`;
+    if (meta) {
+      meta.textContent = `${formatFileSize(arrayBuffer.byteLength)} · ${ext.toUpperCase()} presentation · ${slideCount} slide(s)`;
     }
+
+    // Connect navigation
+    const prevBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-prev');
+    const nextBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-next');
+    const pageIndicator = container.querySelector<HTMLElement>('#gitpreview-ppt-page');
+
+    if (pageIndicator) {
+      pageIndicator.textContent = `1 / ${slideCount || 1}`;
+    }
+
+    const updatePage = () => {
+      if (pageIndicator && previewer) {
+        pageIndicator.textContent = `${(previewer.currentIndex || 0) + 1} / ${slideCount || 1}`;
+      }
+    };
+
+    prevBtn?.addEventListener('click', () => {
+      if (!previewer) return;
+      previewer.renderPreSlide();
+      updatePage();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (!previewer) return;
+      previewer.renderNextSlide();
+      updatePage();
+    });
+
+    // Fullscreen toggle
+    const fullscreenBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-fullscreen');
+    const slideContainer = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-container');
+    const fullIcon = container.querySelector<HTMLElement>('.gitpreview-ppt-fullscreen-icon');
+    const exitIcon = container.querySelector<HTMLElement>('.gitpreview-ppt-fullscreen-exit-icon');
+
+    fullscreenBtn?.addEventListener('click', async () => {
+      if (!slideContainer) return;
+      if (!document.fullscreenElement) {
+        try {
+          await slideContainer.requestFullscreen();
+          fullIcon!.style.display = 'none';
+          exitIcon!.style.display = 'block';
+        } catch { /* fullscreen not supported */ }
+      } else {
+        await document.exitFullscreen();
+        fullIcon!.style.display = '';
+        exitIcon!.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        fullIcon!.style.display = '';
+        exitIcon!.style.display = 'none';
+      }
+    });
+
+    // Download
+    const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
+    downloadBtn?.addEventListener('click', () => {
+      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    });
+
+    // Keyboard navigation
+    _boundKeydown = (e: KeyboardEvent) => {
+      if (!previewer) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        previewer.renderNextSlide();
+        updatePage();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        previewer.renderPreSlide();
+        updatePage();
+      } else if (e.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (e.key === 'f' || e.key === 'F') {
+        fullscreenBtn?.click();
+      }
+    };
+    document.addEventListener('keydown', _boundKeydown);
   } catch (err) {
     console.error('GitPreview powerpoint error:', err);
     container.innerHTML = renderErrorContent(
@@ -80,6 +208,10 @@ export async function openPowerPointPreview(
 }
 
 export function closePowerPointPreview(): void {
+  if (_boundKeydown) {
+    document.removeEventListener('keydown', _boundKeydown);
+    _boundKeydown = null;
+  }
   if (currentPreviewer) {
     try {
       currentPreviewer.destroy();
@@ -88,12 +220,13 @@ export function closePowerPointPreview(): void {
     }
     currentPreviewer = null;
   }
+  currentContainer = null;
 }
 
 export const powerPointHandler: PreviewHandler = {
   extensions: ['pptx', 'ppt'],
   getBlobButtonSelector() {
-    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
+    return 'button[data-testid="download-raw-button"]';
   },
   openPreview(rawUrl: string, filename: string, container?: HTMLElement) {
     if (!container) return;
