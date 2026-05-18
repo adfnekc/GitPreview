@@ -148,6 +148,7 @@ export function createModalContainer(
   const overlay = document.createElement('div');
   overlay.className = 'gitpreview-modal-overlay';
   overlay.id = 'gitpreview-modal-overlay';
+  overlay.tabIndex = -1;
 
   const container = document.createElement('div');
   container.className = 'gitpreview-modal-container';
@@ -181,6 +182,10 @@ export function createModalContainer(
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) onClose();
+  });
+
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') onClose();
   });
 
   return overlay;
@@ -225,6 +230,7 @@ export function showLoadingModal(filename: string, onClose?: () => void): void {
       <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
     </div>`;
   document.body.appendChild(overlay);
+  overlay.focus();
 }
 
 export function showError(filename: string, message: string): void {
@@ -245,6 +251,7 @@ export function showErrorModal(filename: string, message: string, onClose?: () =
     overlay.querySelector<HTMLElement>('#gitpreview-modal-content')!;
   content.innerHTML = renderErrorContent(message);
   document.body.appendChild(overlay);
+  overlay.focus();
 }
 
 export function removeExistingPlayer(): void {
