@@ -120,24 +120,30 @@ function observePageChanges(): void {
   requestAnimationFrame(pollUrl);
 }
 
-function onUrlChanged(): void {
-  closeAll();
-  document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
-    el.classList.remove('gitpreview-link-processed');
-  });
-  document.querySelectorAll('.gitpreview-blob-target').forEach((el) => {
-    el.classList.remove('gitpreview-blob-target');
-    (el as HTMLElement).style.display = '';
-  });
-  document.querySelectorAll('.gitpreview-preview-btn').forEach((el) => {
-    el.remove();
-  });
-  document.querySelectorAll('.gitpreview-blob-preview-btn').forEach((el) => {
-    el.remove();
-  });
+let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  addPreviewButtons();
-  retryBlobPage();
+function onUrlChanged(): void {
+  if (_urlChangeTimer) clearTimeout(_urlChangeTimer);
+  _urlChangeTimer = setTimeout(() => {
+    _urlChangeTimer = null;
+    closeAll();
+    document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
+      el.classList.remove('gitpreview-link-processed');
+    });
+    document.querySelectorAll('.gitpreview-blob-target').forEach((el) => {
+      el.classList.remove('gitpreview-blob-target');
+      (el as HTMLElement).style.display = '';
+    });
+    document.querySelectorAll('.gitpreview-preview-btn').forEach((el) => {
+      el.remove();
+    });
+    document.querySelectorAll('.gitpreview-blob-preview-btn').forEach((el) => {
+      el.remove();
+    });
+
+    addPreviewButtons();
+    retryBlobPage();
+  }, 300);
 }
 
 function retryBlobPage(maxRetries = 8, interval = 400): void {

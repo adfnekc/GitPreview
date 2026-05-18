@@ -92,6 +92,7 @@ export function insertInlineContainer(container: HTMLElement): void {
     if (target?.parentElement) {
       target.parentElement.insertBefore(container, target);
       target.classList.add('gitpreview-blob-target');
+      target.style.display = 'none';
       return;
     }
   }
