@@ -1,6 +1,6 @@
 .gitpreview-inline-container {
   border: 1px solid #d1d9e0;
-  border-bottom: none;
+  border-radius: 6px;
   margin: 46px 0 0 0;
   background-color: #ffffff;
   overflow: hidden;

@@ -50,10 +50,22 @@ let settings = {
 };
 
 let isInitialized = false;
+let _currentPreviewBlobPath: string | null = null;
+let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getBlobFilePath(url: string): string | null {
+  const m = url.match(/\/blob\/(.+?)(?:\?|#|$)/);
+  return m ? m[1] : null;
+}
+
+function log(...args: unknown[]): void {
+  console.log('[GitPreview]', ...args);
+}
 
 function init(): void {
   if (isInitialized) return;
   isInitialized = true;
+  log('init — start');
 
   loadSettings()
     .then(() => {
@@ -67,6 +79,7 @@ function init(): void {
         setVolume,
         getVolume,
       });
+      log('init — ready');
     })
     .catch((err) => {
       console.error('GitPreview: Initialization error:', err);
@@ -120,12 +133,18 @@ function observePageChanges(): void {
   requestAnimationFrame(pollUrl);
 }
 
-let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
-
 function onUrlChanged(): void {
   if (_urlChangeTimer) clearTimeout(_urlChangeTimer);
+
+  const newBlobPath = getBlobFilePath(location.href);
+  if (_currentPreviewBlobPath && newBlobPath === _currentPreviewBlobPath) {
+    log('onUrlChanged — same blob file, skipping cleanup:', newBlobPath);
+    return;
+  }
+
   _urlChangeTimer = setTimeout(() => {
     _urlChangeTimer = null;
+    log('onUrlChanged — executing cleanup, new url:', location.href);
     closeAll();
     document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
       el.classList.remove('gitpreview-link-processed');
@@ -158,6 +177,7 @@ function retryBlobPage(maxRetries = 8, interval = 400): void {
 
     if (!document.querySelector('.gitpreview-blob-preview-btn') && retries > 0) {
       retries--;
+      log('retryBlobPage — retries left:', retries);
       setTimeout(tryHandle, interval);
     }
   }
@@ -193,6 +213,7 @@ function addPreviewButtons(): void {
     if (!isSupported(extension)) return;
 
     link.classList.add('gitpreview-link-processed');
+    log('addPreviewButtons — adding button for:', href);
 
     const btn = createPreviewButton(
       href,
@@ -213,19 +234,31 @@ function addPreviewButtons(): void {
 // ── Blob page: preview button + auto-open ───────────────────
 
 function handleBlobPage(): void {
-  if (document.querySelector('.gitpreview-blob-preview-btn')) return;
+  if (document.querySelector('.gitpreview-blob-preview-btn')) {
+    log('handleBlobPage — button already exists, skip');
+    return;
+  }
 
   const url = location.href;
   if (!isBlobPage(url)) return;
 
   const extension = getFileExtension(url);
   const handler = getHandler(extension);
-  if (!handler) return;
+  if (!handler) {
+    log('handleBlobPage — no handler for:', extension);
+    return;
+  }
 
   const filename = decodeURIComponent(url.split('/').pop()!.split('?')[0]);
+  log('handleBlobPage — setting up for:', filename);
 
   const btn = createPreviewButton(url, filename, false, openPreview);
   btn.classList.add('gitpreview-blob-preview-btn');
+
+  // Auto-open: set button to "Hide" state BEFORE first paint to avoid flicker
+  if (!handler.opensInNewTab) {
+    updatePreviewButtonState(btn, true);
+  }
 
   // Position button before the element the handler specifies
   const target = document.querySelector<HTMLAnchorElement>(
@@ -233,6 +266,7 @@ function handleBlobPage(): void {
   );
   if (target?.parentElement) {
     target.parentElement.insertBefore(btn, target);
+    log('handleBlobPage — button inserted before target selector');
   } else {
     const possibleTargets = [
       '[class*="BlobViewHeader-module"]',
@@ -251,6 +285,7 @@ function handleBlobPage(): void {
       if (el) {
         el.appendChild(btn);
         inserted = true;
+        log('handleBlobPage — button inserted via fallback:', selector);
         break;
       }
     }
@@ -261,7 +296,9 @@ function handleBlobPage(): void {
       );
       if (blobHeader) {
         blobHeader.appendChild(btn);
+        log('handleBlobPage — button inserted via last-resort blobHeader');
       } else {
+        log('handleBlobPage — FAILED to find any insertion target, no button');
         return;
       }
     }
@@ -270,7 +307,6 @@ function handleBlobPage(): void {
   // Auto-open preview on blob page load (skip new-tab handlers like PDF)
   if (!handler.opensInNewTab) {
     openPreview(url, filename);
-    setTimeout(() => updatePreviewButtonState(btn, true), 100);
   }
 }
 
@@ -281,6 +317,12 @@ function openPreview(fileUrl: string, filename: string): void {
   const ext = getFileExtension(fileUrl);
   const handler = getHandler(ext);
   if (!handler) return;
+
+  log('openPreview —', filename, 'handler:', ext);
+
+  // Track current preview to protect against SPA URL blips
+  const blobPath = getBlobFilePath(fileUrl);
+  if (blobPath) _currentPreviewBlobPath = blobPath;
 
   // New-tab handlers (PDF) manage themselves
   if (handler.opensInNewTab) {
@@ -293,6 +335,7 @@ function openPreview(fileUrl: string, filename: string): void {
     showLoadingModal(filename, closeAll);
   } else {
     if (document.getElementById('gitpreview-inline')) {
+      log('openPreview — toggling off, already open');
       closeAll();
       return;
     }
@@ -306,6 +349,7 @@ function openPreview(fileUrl: string, filename: string): void {
 }
 
 function closeAll(): void {
+  log('closeAll — closing previews');
   closeAudioPreview();
   closeVideoPreview();
   closeFontPreview();
@@ -323,6 +367,9 @@ function closeAll(): void {
   document.querySelectorAll('.gitpreview-preview-btn').forEach((btn) => {
     updatePreviewButtonState(btn as HTMLElement, false);
   });
+
+  _currentPreviewBlobPath = null;
+  log('closeAll — done');
 }
 
 // ── Boot ────────────────────────────────────────────────────
