@@ -1,10 +1,14 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize } from '../../utils';
+import { fetchBinary } from '../../lib/range-fetcher';
 import { renderErrorContent } from '../ui';
 import { init } from 'pptx-preview';
 
 let currentPreviewer: any = null;
 let _boundKeydown: ((e: KeyboardEvent) => void) | null = null;
+let _boundMousemove: ((e: MouseEvent) => void) | null = null;
+let _boundMouseup: (() => void) | null = null;
+let _boundResize: (() => void) | null = null;
 let _activeViewport: HTMLElement | null = null;
 
 // Per-preview state — reset on each openPowerPointPreview call
@@ -16,30 +20,6 @@ let _dragStartX = 0;
 let _dragStartY = 0;
 let _panStartX = 0;
 let _panStartY = 0;
-
-function fetchBinary(url: string): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      { action: 'fetchBinary', url },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        if (response.success) {
-          const binary = atob(response.data);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-          }
-          resolve(bytes.buffer as ArrayBuffer);
-        } else {
-          reject(new Error(response.error || 'Failed to fetch presentation'));
-        }
-      },
-    );
-  });
-}
 
 export async function openPowerPointPreview(
   url: string,
@@ -260,19 +240,21 @@ export async function openPowerPointPreview(
       e.preventDefault();
     });
 
-    document.addEventListener('mousemove', (e: MouseEvent) => {
+    _boundMousemove = (e: MouseEvent) => {
       if (!_isDragging) return;
       _panX = _panStartX + (e.clientX - _dragStartX);
       _panY = _panStartY + (e.clientY - _dragStartY);
       applyTransform();
-    });
+    };
+    document.addEventListener('mousemove', _boundMousemove);
 
-    document.addEventListener('mouseup', () => {
+    _boundMouseup = () => {
       if (!_isDragging) return;
       _isDragging = false;
       viewport.style.cursor = '';
       viewport.style.userSelect = '';
-    });
+    };
+    document.addEventListener('mouseup', _boundMouseup);
 
     // ── Navigation ──────────────────────────────────
     let currentIndex = 0;
@@ -348,7 +330,8 @@ export async function openPowerPointPreview(
       setTimeout(() => applyTransform(), 150);
     });
 
-    window.addEventListener('resize', applyTransform);
+    _boundResize = applyTransform;
+    window.addEventListener('resize', _boundResize);
 
     // Download
     const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
@@ -391,6 +374,18 @@ export function closePowerPointPreview(): void {
   if (_boundKeydown) {
     document.removeEventListener('keydown', _boundKeydown);
     _boundKeydown = null;
+  }
+  if (_boundMousemove) {
+    document.removeEventListener('mousemove', _boundMousemove);
+    _boundMousemove = null;
+  }
+  if (_boundMouseup) {
+    document.removeEventListener('mouseup', _boundMouseup);
+    _boundMouseup = null;
+  }
+  if (_boundResize) {
+    window.removeEventListener('resize', _boundResize);
+    _boundResize = null;
   }
   if (currentPreviewer) {
     try {

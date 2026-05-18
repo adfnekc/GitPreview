@@ -1,5 +1,6 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize } from '../../utils';
+import { fetchBinary } from '../../lib/range-fetcher';
 import { renderErrorContent } from '../ui';
 import * as XLSX from 'xlsx';
 
@@ -15,28 +16,7 @@ export async function openExcelPreview(
     </div>`;
 
   try {
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { action: 'fetchBinary', url },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          if (response.success) {
-            const binary = atob(response.data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-              bytes[i] = binary.charCodeAt(i);
-            }
-            resolve(bytes.buffer as ArrayBuffer);
-          } else {
-            reject(new Error(response.error || 'Failed to fetch spreadsheet'));
-          }
-        },
-      );
-    });
-
+    const arrayBuffer = await fetchBinary(url);
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const sheetNames = workbook.SheetNames;
 

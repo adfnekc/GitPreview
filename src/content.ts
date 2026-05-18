@@ -7,6 +7,7 @@ import { wordHandler } from './preview/word/index';
 import { excelHandler } from './preview/excel/index';
 import { powerPointHandler } from './preview/powerpoint/index';
 import { registerHandler, getHandler, isSupported } from './preview/registry';
+import type { PreviewHandler } from './preview/handler';
 import {
   createPreviewButton,
   updatePreviewButtonState,
@@ -52,6 +53,7 @@ let settings = {
 let isInitialized = false;
 let _currentPreviewBlobPath: string | null = null;
 let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
+let _unbindKeyboardShortcuts: (() => void) | null = null;
 
 function getBlobFilePath(url: string): string | null {
   const m = url.match(/\/blob\/(.+?)(?:\?|#|$)/);
@@ -72,7 +74,7 @@ function init(): void {
       observePageChanges();
       addPreviewButtons();
       handleBlobPage();
-      bindKeyboardShortcuts(settings, closeAll, {
+      _unbindKeyboardShortcuts = bindKeyboardShortcuts(settings, closeAll, {
         togglePlay,
         rewind,
         forward,
@@ -260,54 +262,61 @@ function handleBlobPage(): void {
     updatePreviewButtonState(btn, true);
   }
 
-  // Position button before the element the handler specifies
-  const target = document.querySelector<HTMLAnchorElement>(
-    handler.getBlobButtonSelector(),
-  );
-  if (target?.parentElement) {
-    target.parentElement.insertBefore(btn, target);
-    log('handleBlobPage — button inserted before target selector');
-  } else {
-    const possibleTargets = [
-      '[class*="BlobViewHeader-module"]',
-      '[class*="react-blob-header-actions"]',
-      '[class*="react-blob-header-edit-and-raw-actions"]',
-      '.file-actions',
-      '[data-testid="file-header"]',
-      '.react-blob-header',
-      '.Box-header .d-flex',
-      '.Box-header',
-    ];
-
-    let inserted = false;
-    for (const selector of possibleTargets) {
-      const el = document.querySelector(selector);
-      if (el) {
-        el.appendChild(btn);
-        inserted = true;
-        log('handleBlobPage — button inserted via fallback:', selector);
-        break;
-      }
-    }
-
-    if (!inserted) {
-      const blobHeader = document.querySelector<HTMLElement>(
-        '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]',
-      );
-      if (blobHeader) {
-        blobHeader.appendChild(btn);
-        log('handleBlobPage — button inserted via last-resort blobHeader');
-      } else {
-        log('handleBlobPage — FAILED to find any insertion target, no button');
-        return;
-      }
-    }
+  if (!insertBlobPageButton(btn, handler)) {
+    log('handleBlobPage — FAILED to find any insertion target, no button');
+    return;
   }
 
   // Auto-open preview on blob page load (skip new-tab handlers like PDF)
   if (!handler.opensInNewTab) {
     openPreview(url, filename);
   }
+}
+
+function insertBlobPageButton(
+  btn: HTMLElement,
+  handler: PreviewHandler,
+): boolean {
+  // Position button before the element the handler specifies
+  const target = document.querySelector<HTMLAnchorElement>(
+    handler.getBlobButtonSelector(),
+  );
+  if (target?.parentElement) {
+    target.parentElement.insertBefore(btn, target);
+    log('insertBlobPageButton — inserted before target selector');
+    return true;
+  }
+
+  const fallbackSelectors = [
+    '[class*="BlobViewHeader-module"]',
+    '[class*="react-blob-header-actions"]',
+    '[class*="react-blob-header-edit-and-raw-actions"]',
+    '.file-actions',
+    '[data-testid="file-header"]',
+    '.react-blob-header',
+    '.Box-header .d-flex',
+    '.Box-header',
+  ];
+
+  for (const selector of fallbackSelectors) {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.appendChild(btn);
+      log('insertBlobPageButton — inserted via fallback:', selector);
+      return true;
+    }
+  }
+
+  const blobHeader = document.querySelector<HTMLElement>(
+    '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]',
+  );
+  if (blobHeader) {
+    blobHeader.appendChild(btn);
+    log('insertBlobPageButton — inserted via last-resort blobHeader');
+    return true;
+  }
+
+  return false;
 }
 
 // ── Preview orchestration ───────────────────────────────────
@@ -350,6 +359,10 @@ function openPreview(fileUrl: string, filename: string): void {
 
 function closeAll(): void {
   log('closeAll — closing previews');
+  if (_unbindKeyboardShortcuts) {
+    _unbindKeyboardShortcuts();
+    _unbindKeyboardShortcuts = null;
+  }
   closeAudioPreview();
   closeVideoPreview();
   closeFontPreview();

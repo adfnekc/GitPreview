@@ -1,3 +1,5 @@
+import { base64ToArrayBuffer } from '../utils';
+
 export interface FileInfo {
   size: number;
   acceptsRanges: boolean;
@@ -57,11 +59,25 @@ export class RangeFetcher {
   }
 }
 
-export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const byteString = atob(base64);
-  const byteArray = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) {
-    byteArray[i] = byteString.charCodeAt(i);
-  }
-  return byteArray.buffer;
+export function fetchBinary(url: string): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage(
+        { action: 'fetchBinary', url },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          if (response.success) {
+            resolve(base64ToArrayBuffer(response.data));
+          } else {
+            reject(new Error(response.error || 'Failed to fetch binary'));
+          }
+        },
+      );
+    } else {
+      reject(new Error('Chrome runtime not available'));
+    }
+  });
 }

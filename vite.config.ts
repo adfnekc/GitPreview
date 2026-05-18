@@ -6,6 +6,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       input: {
         content: resolve(__dirname, 'src/content.ts'),

@@ -10,8 +10,8 @@ export function bindKeyboardShortcuts(
   options: { keyboardShortcuts: boolean },
   closeAll: () => void,
   player: PlayerControls,
-): void {
-  document.addEventListener('keydown', (e) => {
+): () => void {
+  const handler = (e: KeyboardEvent) => {
     if (!options.keyboardShortcuts) return;
 
     const isPreviewOpen =
@@ -47,5 +47,9 @@ export function bindKeyboardShortcuts(
           break;
       }
     }
-  });
+  };
+
+  document.addEventListener('keydown', handler);
+
+  return () => document.removeEventListener('keydown', handler);
 }

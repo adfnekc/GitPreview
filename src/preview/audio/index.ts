@@ -1,5 +1,5 @@
 import { type PreviewHandler } from '../handler';
-import { AUDIO_EXTENSIONS, escapeHTML } from '../../utils';
+import { AUDIO_EXTENSIONS, escapeHTML, base64ToArrayBuffer } from '../../utils';
 import { renderErrorContent } from '../ui';
 
 export function isAudioExtension(ext: string): boolean {
@@ -17,15 +17,6 @@ function getAudioMimeType(filename: string): string {
     aac: 'audio/aac',
   };
   return mimeTypes[ext] || 'audio/mpeg';
-}
-
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const byteString = atob(base64);
-  const byteArray = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) {
-    byteArray[i] = byteString.charCodeAt(i);
-  }
-  return byteArray.buffer;
 }
 
 function fetchAudioFromBackground(

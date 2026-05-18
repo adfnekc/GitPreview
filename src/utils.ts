@@ -13,10 +13,14 @@ export function getFileExtension(path: string): string {
   return filename.slice(lastDot + 1).toLowerCase();
 }
 
+export const ALL_EXTENSIONS = [
+  ...AUDIO_EXTENSIONS, ...PDF_EXTENSIONS, ...VIDEO_EXTENSIONS,
+  ...FONT_EXTENSIONS, ...WORD_EXTENSIONS, ...EXCEL_EXTENSIONS, ...PPT_EXTENSIONS,
+];
+
 export function isSupportedExtension(ext: string | null | undefined): boolean {
   if (!ext) return false;
-  const e = ext.toLowerCase();
-  return AUDIO_EXTENSIONS.includes(e) || PDF_EXTENSIONS.includes(e) || VIDEO_EXTENSIONS.includes(e) || FONT_EXTENSIONS.includes(e) || WORD_EXTENSIONS.includes(e) || EXCEL_EXTENSIONS.includes(e) || PPT_EXTENSIONS.includes(e);
+  return ALL_EXTENSIONS.includes(ext.toLowerCase());
 }
 
 export function escapeHTML(str: string | null | undefined): string {
@@ -30,7 +34,7 @@ export function escapeHTML(str: string | null | undefined): string {
 }
 
 export function formatFileSize(bytes: number | null | undefined): string {
-  if (!bytes || bytes <= 0) return '0 Bytes';
+  if (!bytes || bytes < 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -73,4 +77,22 @@ export function convertToRawUrl(githubUrl: string): string {
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const byteString = atob(base64);
+  const bytes = new Uint8Array(byteString.length);
+  for (let i = 0; i < byteString.length; i++) {
+    bytes[i] = byteString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }

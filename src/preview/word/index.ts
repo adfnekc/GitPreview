@@ -1,5 +1,6 @@
 import { type PreviewHandler } from '../handler';
-import { escapeHTML, formatFileSize } from '../../utils';
+import { escapeHTML, formatFileSize, arrayBufferToBase64 } from '../../utils';
+import { fetchBinary } from '../../lib/range-fetcher';
 import { renderErrorContent } from '../ui';
 import mammoth from 'mammoth';
 
@@ -15,28 +16,7 @@ export async function openWordPreview(
     </div>`;
 
   try {
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { action: 'fetchBinary', url },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          if (response.success) {
-            const binary = atob(response.data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-              bytes[i] = binary.charCodeAt(i);
-            }
-            resolve(bytes.buffer as ArrayBuffer);
-          } else {
-            reject(new Error(response.error || 'Failed to fetch document'));
-          }
-        },
-      );
-    });
-
+    const arrayBuffer = await fetchBinary(url);
     const result = await mammoth.convertToHtml(
       { arrayBuffer },
       {
@@ -82,15 +62,6 @@ export async function openWordPreview(
       (err as Error).message || 'Failed to load Word document',
     );
   }
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
 }
 
 export function closeWordPreview(): void {

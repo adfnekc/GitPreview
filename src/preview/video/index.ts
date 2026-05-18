@@ -1,6 +1,7 @@
 import { type PreviewHandler } from '../handler';
 import { VIDEO_EXTENSIONS, escapeHTML } from '../../utils';
-import { RangeFetcher, base64ToArrayBuffer, type FileInfo } from '../../lib/range-fetcher';
+import { RangeFetcher, type FileInfo } from '../../lib/range-fetcher';
+import { base64ToArrayBuffer } from '../../utils';
 import { NetworkAware } from '../../lib/network-aware';
 import { renderErrorContent } from '../ui';
 
