@@ -8,6 +8,9 @@
 
 .gitpreview-inline-content {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .gitpreview-loading {
@@ -468,6 +471,9 @@
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .gitpreview-inline-container + .gitpreview-blob-target {
@@ -664,7 +670,13 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(to right, #0969da 0%, #0969da 50%, #d1d9e0 50%, #d1d9e0 100%);
+  background: linear-gradient(
+    to right,
+    #0969da 0%,
+    #0969da 50%,
+    #d1d9e0 50%,
+    #d1d9e0 100%
+  );
   border-radius: 2px;
   cursor: pointer;
   outline: none;
@@ -743,7 +755,9 @@
   box-sizing: border-box;
   padding: 8px 12px;
   font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   color: #1f2328;
   background: #f6f8fa;
   border: 1px solid #d1d9e0;
@@ -791,7 +805,13 @@
   }
 
   .gitpreview-font-weight-slider {
-    background: linear-gradient(to right, #2f81f7 0%, #2f81f7 50%, #30363d 50%, #30363d 100%);
+    background: linear-gradient(
+      to right,
+      #2f81f7 0%,
+      #2f81f7 50%,
+      #30363d 50%,
+      #30363d 100%
+    );
   }
 
   .gitpreview-font-weight-slider::-webkit-slider-thumb {
@@ -925,10 +945,18 @@
   color: #1f2328;
 }
 
-.gitpreview-word-body h1 { font-size: 24px; }
-.gitpreview-word-body h2 { font-size: 20px; }
-.gitpreview-word-body h3 { font-size: 16px; }
-.gitpreview-word-body h4 { font-size: 14px; }
+.gitpreview-word-body h1 {
+  font-size: 24px;
+}
+.gitpreview-word-body h2 {
+  font-size: 20px;
+}
+.gitpreview-word-body h3 {
+  font-size: 16px;
+}
+.gitpreview-word-body h4 {
+  font-size: 14px;
+}
 
 .gitpreview-word-body p {
   margin: 0 0 12px 0;
@@ -1124,7 +1152,9 @@
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .gitpreview-excel-tab:hover {
@@ -1154,7 +1184,8 @@
   border-collapse: collapse;
   width: 100%;
   font-size: 13px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 .gitpreview-excel-body th,
@@ -1183,6 +1214,8 @@
   padding: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .gitpreview-ppt-header {
@@ -1239,7 +1272,9 @@
   background: #f6f8fa;
   color: #656d76;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .gitpreview-ppt-btn:hover {
@@ -1257,6 +1292,7 @@
   display: flex;
   flex-direction: column;
   background: #f6f8fa;
+  position: relative;
 }
 
 .gitpreview-ppt-slide-viewport {
@@ -1267,53 +1303,41 @@
   padding: 8px;
   overflow: hidden;
   position: relative;
-}
-
-.gitpreview-ppt-slide-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-/* Override pptx-preview's black background */
-.gitpreview-ppt-slide-wrapper .pptx-preview-wrapper {
-  background: transparent !important;
-}
-
-.gitpreview-ppt-slide-wrapper canvas {
-  display: block;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-  border-radius: 2px;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  min-height: 400px;
 }
 
 .gitpreview-ppt-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 12px 16px;
+  justify-content: space-between;
+  padding: 8px 12px;
   border-top: 1px solid #d1d9e0;
   background: #ffffff;
+}
+
+.gitpreview-ppt-controls-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
 }
 
 .gitpreview-ppt-nav-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 6px;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
   border: 1px solid rgba(31, 35, 40, 0.15);
   border-radius: 6px;
   background: #f6f8fa;
   color: #656d76;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .gitpreview-ppt-nav-btn:hover {
@@ -1322,8 +1346,8 @@
 }
 
 .gitpreview-ppt-nav-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .gitpreview-ppt-page-indicator {
@@ -1335,8 +1359,49 @@
   font-variant-numeric: tabular-nums;
 }
 
+.gitpreview-ppt-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gitpreview-ppt-zoom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border: 1px solid rgba(31, 35, 40, 0.15);
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #656d76;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.gitpreview-ppt-zoom-btn:hover {
+  background: #e5e7eb;
+  color: #1f2328;
+}
+
+.gitpreview-ppt-zoom-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #656d76;
+  min-width: 40px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Fullscreen mode */
-.gitpreview-ppt-slide-container:-webkit-full-screen {
+.gitpreview-ppt-slide-container:-webkit-full-screen,
+.gitpreview-ppt-slide-container:fullscreen {
   background: #000;
   display: flex;
   flex-direction: column;
@@ -1344,7 +1409,9 @@
   align-items: center;
 }
 
-.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-slide-viewport {
+.gitpreview-ppt-slide-container:-webkit-full-screen
+  .gitpreview-ppt-slide-viewport,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-slide-viewport {
   flex: 1;
   display: flex;
   justify-content: center;
@@ -1354,25 +1421,50 @@
   height: 100%;
 }
 
-.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-controls {
+.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-controls,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-controls {
+  width: 100%;
   background: rgba(0, 0, 0, 0.6);
   border-top-color: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
-.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-nav-btn {
+.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-nav-btn,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-nav-btn {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
-.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-nav-btn:hover {
+.gitpreview-ppt-slide-container:-webkit-full-screen
+  .gitpreview-ppt-nav-btn:hover,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-nav-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-page-indicator {
+.gitpreview-ppt-slide-container:-webkit-full-screen
+  .gitpreview-ppt-page-indicator,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-page-indicator {
   color: #fff;
+}
+
+.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-zoom-btn,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-zoom-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.gitpreview-ppt-slide-container:-webkit-full-screen
+  .gitpreview-ppt-zoom-btn:hover,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.gitpreview-ppt-slide-container:-webkit-full-screen .gitpreview-ppt-zoom-label,
+.gitpreview-ppt-slide-container:fullscreen .gitpreview-ppt-zoom-label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Dark theme */
@@ -1427,5 +1519,20 @@
 
   .gitpreview-ppt-page-indicator {
     color: #e6edf3;
+  }
+
+  .gitpreview-ppt-zoom-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #8b949e;
+  }
+
+  .gitpreview-ppt-zoom-btn:hover {
+    background: #30363d;
+    color: #e6edf3;
+  }
+
+  .gitpreview-ppt-zoom-label {
+    color: #8b949e;
   }
 }

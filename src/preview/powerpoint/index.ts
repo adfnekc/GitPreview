@@ -4,14 +4,54 @@ import { renderErrorContent } from '../ui';
 import { init } from 'pptx-preview';
 
 let currentPreviewer: any = null;
-let currentContainer: HTMLElement | null = null;
 let _boundKeydown: ((e: KeyboardEvent) => void) | null = null;
+let _activeViewport: HTMLElement | null = null;
+
+// Per-preview state — reset on each openPowerPointPreview call
+let _zoomLevel = 1;
+let _panX = 0;
+let _panY = 0;
+let _isDragging = false;
+let _dragStartX = 0;
+let _dragStartY = 0;
+let _panStartX = 0;
+let _panStartY = 0;
+
+function fetchBinary(url: string): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      { action: 'fetchBinary', url },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (response.success) {
+          const binary = atob(response.data);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          resolve(bytes.buffer as ArrayBuffer);
+        } else {
+          reject(new Error(response.error || 'Failed to fetch presentation'));
+        }
+      },
+    );
+  });
+}
 
 export async function openPowerPointPreview(
   url: string,
   filename: string,
   container: HTMLElement,
 ): Promise<void> {
+  // Reset per-preview state
+  _zoomLevel = 1;
+  _panX = 0;
+  _panY = 0;
+  _isDragging = false;
+
   container.innerHTML = `
     <div class="gitpreview-loading">
       <div class="gitpreview-spinner"></div>
@@ -19,30 +59,8 @@ export async function openPowerPointPreview(
     </div>`;
 
   try {
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { action: 'fetchBinary', url },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          if (response.success) {
-            const binary = atob(response.data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-              bytes[i] = binary.charCodeAt(i);
-            }
-            resolve(bytes.buffer as ArrayBuffer);
-          } else {
-            reject(new Error(response.error || 'Failed to fetch presentation'));
-          }
-        },
-      );
-    });
-
+    const arrayBuffer = await fetchBinary(url);
     const ext = filename.split('.').pop()?.toLowerCase() || 'pptx';
-    currentContainer = container;
 
     container.innerHTML = `
       <div class="gitpreview-ppt-preview">
@@ -71,119 +89,239 @@ export async function openPowerPointPreview(
           </div>
         </div>
         <div class="gitpreview-ppt-slide-container">
-          <div class="gitpreview-ppt-slide-viewport">
-            <div class="gitpreview-ppt-slide-wrapper"></div>
+          <div class="gitpreview-ppt-slide-viewport" id="gitpreview-ppt-viewport">
+            <div class="gitpreview-ppt-slide-stage" id="gitpreview-ppt-stage"></div>
           </div>
           <div class="gitpreview-ppt-controls">
-            <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-prev" title="Previous slide">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span class="gitpreview-ppt-page-indicator" id="gitpreview-ppt-page">1 / 1</span>
-            <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-next" title="Next slide">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            <div class="gitpreview-ppt-controls-nav">
+              <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-prev" title="Previous slide">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span class="gitpreview-ppt-page-indicator" id="gitpreview-ppt-page">1 / 1</span>
+              <button class="gitpreview-ppt-nav-btn" id="gitpreview-ppt-next" title="Next slide">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            <div class="gitpreview-ppt-zoom-controls" id="gitpreview-ppt-zoom-controls">
+              <button class="gitpreview-ppt-zoom-btn" id="gitpreview-ppt-zoom-out" title="Zoom out">−</button>
+              <span class="gitpreview-ppt-zoom-label" id="gitpreview-ppt-zoom-label" title="Double-click to reset">100%</span>
+              <button class="gitpreview-ppt-zoom-btn" id="gitpreview-ppt-zoom-in" title="Zoom in">+</button>
+            </div>
           </div>
         </div>
       </div>`;
 
-    const wrapper = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-wrapper');
-    if (!wrapper) return;
+    const stage = container.querySelector<HTMLElement>('#gitpreview-ppt-stage');
+    const viewport = container.querySelector<HTMLElement>('#gitpreview-ppt-viewport');
+    if (!stage || !viewport) return;
+    _activeViewport = viewport;
 
-    const viewport = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-viewport');
-    const viewportWidth = viewport ? viewport.clientWidth - 4 : 800;
+    // Hidden container where pptx-preview renders all slides
+    const tempWrapper = document.createElement('div');
+    tempWrapper.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;';
+    document.body.appendChild(tempWrapper);
 
-    const previewer = init(wrapper, {
+    const previewer = init(tempWrapper, {
       renderer: 'canvas',
-      mode: 'slide',
-      width: viewportWidth,
-      height: viewport ? Math.max(viewport.clientHeight - 4, 400) : 600,
+      mode: 'scroll',
+      width: 800,
+      height: 600,
     });
 
     currentPreviewer = previewer;
-    await previewer.preview(arrayBuffer);
-
-    // Remove built-in nav buttons from pptx-preview, keep only the slide
-    const ppWrapper = wrapper.querySelector<HTMLElement>('.pptx-preview-wrapper');
-    if (ppWrapper) {
-      // Remove all children except the slide wrapper
-      const slides = ppWrapper.querySelectorAll<HTMLElement>('[class*="pptx-preview-slide-wrapper"]');
-      ppWrapper.querySelectorAll('.pptx-preview-wrapper-next, .pptx-preview-wrapper-pagination, .pptx-preview-wrapper-pre').forEach((el) => el.remove());
-    }
-
-    // After render, scale slide to fit viewport
-    const fitSlideToViewport = () => {
-      if (!ppWrapper) return;
-      const slideEl = ppWrapper.querySelector<HTMLElement>('[class*="pptx-preview-slide-wrapper"]');
-      if (!slideEl || !viewport) return;
-
-      const rect = slideEl.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-
-      const vpRect = viewport.getBoundingClientRect();
-      const availW = vpRect.width - 16;
-      const availH = vpRect.height - 16;
-      if (availW <= 0 || availH <= 0) return;
-
-      const scale = Math.min(availW / rect.width, availH / rect.height, 1);
-
-      ppWrapper.style.width = '';
-      ppWrapper.style.height = '';
-      ppWrapper.style.background = 'transparent';
-      ppWrapper.style.margin = '0';
-      ppWrapper.style.overflow = 'visible';
-
-      slideEl.style.position = 'relative';
-      slideEl.style.top = 'auto';
-      slideEl.style.left = 'auto';
-      slideEl.style.transformOrigin = '0 0';
-      slideEl.style.transform = `scale(${scale})`;
-
-      ppWrapper.style.width = `${rect.width * scale}px`;
-      ppWrapper.style.height = `${rect.height * scale}px`;
-    };
-
-    fitSlideToViewport();
-
+    await previewer.load(arrayBuffer);
     const slideCount = previewer.slideCount || 0;
+
+    // Update metadata
     const meta = container.querySelector('.gitpreview-ppt-meta');
     if (meta) {
       meta.textContent = `${formatFileSize(arrayBuffer.byteLength)} · ${ext.toUpperCase()} presentation · ${slideCount} slide(s)`;
     }
 
-    // Connect navigation
-    const prevBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-prev');
-    const nextBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-next');
     const pageIndicator = container.querySelector<HTMLElement>('#gitpreview-ppt-page');
-
     if (pageIndicator) {
       pageIndicator.textContent = `1 / ${slideCount || 1}`;
     }
 
+    // Pre-render ALL slides once
+    for (let i = 0; i < slideCount; i++) {
+      previewer.htmlRender.renderSlide(i);
+    }
+    previewer.wrapper.style.background = 'transparent';
+
+    const allSlides = Array.from(
+      previewer.wrapper.querySelectorAll<HTMLElement>('.pptx-preview-slide-wrapper'),
+    );
+
+    // ── Zoom, pan, and transform ─────────────────────
+    const zoomLabel = container.querySelector<HTMLElement>('#gitpreview-ppt-zoom-label');
+    const zoomIn = container.querySelector<HTMLElement>('#gitpreview-ppt-zoom-in');
+    const zoomOut = container.querySelector<HTMLElement>('#gitpreview-ppt-zoom-out');
+
+    function updateZoomUI(): void {
+      if (zoomLabel) zoomLabel.textContent = `${Math.round(_zoomLevel * 100)}%`;
+    }
+
+    function isSlideExceeds80(intW: number, intH: number, vpW: number, vpH: number): boolean {
+      const baseScale = Math.min(vpW / intW, vpH / intH, 1);
+      const scale = baseScale * _zoomLevel;
+      return intW * scale > vpW * 0.8 || intH * scale > vpH * 0.8;
+    }
+
+    function applyTransform(): void {
+      const slide = stage.firstElementChild as HTMLElement | null;
+      if (!slide) return;
+
+      const intW = slide.offsetWidth;
+      const intH = slide.offsetHeight;
+      if (intW === 0 || intH === 0) return;
+
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      if (vpW <= 0 || vpH <= 0) return;
+
+      const baseScale = Math.min(vpW / intW, vpH / intH, 1);
+      const scale = baseScale * _zoomLevel;
+
+      slide.style.position = 'relative';
+      slide.style.top = '';
+      slide.style.left = '';
+      slide.style.margin = '0';
+      slide.style.transformOrigin = '0 0';
+      slide.style.transform = `translate(${_panX}px, ${_panY}px) scale(${scale})`;
+      slide.style.flexShrink = '0';
+
+      const spacer = slide.parentElement;
+      if (spacer) {
+        spacer.style.width = `${intW * scale}px`;
+        spacer.style.height = `${intH * scale}px`;
+        spacer.style.flexShrink = '0';
+      }
+
+      viewport.style.cursor = isSlideExceeds80(intW, intH, vpW, vpH) ? 'grab' : '';
+
+      updateZoomUI();
+    }
+
+    zoomIn?.addEventListener('click', () => {
+      _zoomLevel = Math.min(5, _zoomLevel + 0.1);
+      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
+      applyTransform();
+    });
+
+    zoomOut?.addEventListener('click', () => {
+      _zoomLevel = Math.max(0.1, _zoomLevel - 0.1);
+      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
+      applyTransform();
+    });
+
+    // Double-click zoom label to reset
+    zoomLabel?.addEventListener('dblclick', () => {
+      _zoomLevel = 1;
+      _panX = 0;
+      _panY = 0;
+      applyTransform();
+    });
+
+    // ── Touchpad / pinch-to-zoom ─────────────────────
+    viewport.addEventListener('wheel', (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const factor = 1 + Math.abs(delta) / 200;
+      _zoomLevel = delta > 0
+        ? Math.min(5, _zoomLevel * factor)
+        : Math.max(0.1, _zoomLevel / factor);
+      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
+      applyTransform();
+    }, { passive: false });
+
+    // ── Mouse drag panning ───────────────────────────
+    viewport.addEventListener('mousedown', (e: MouseEvent) => {
+      const slide = stage.firstElementChild as HTMLElement | null;
+      if (!slide) return;
+      const intW = slide.offsetWidth;
+      const intH = slide.offsetHeight;
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      if (!isSlideExceeds80(intW, intH, vpW, vpH)) return;
+
+      _isDragging = true;
+      _dragStartX = e.clientX;
+      _dragStartY = e.clientY;
+      _panStartX = _panX;
+      _panStartY = _panY;
+      viewport.style.cursor = 'grabbing';
+      viewport.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!_isDragging) return;
+      _panX = _panStartX + (e.clientX - _dragStartX);
+      _panY = _panStartY + (e.clientY - _dragStartY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!_isDragging) return;
+      _isDragging = false;
+      viewport.style.cursor = '';
+      viewport.style.userSelect = '';
+    });
+
+    // ── Navigation ──────────────────────────────────
+    let currentIndex = 0;
+
+    function showSlide(index: number): void {
+      // Move previously-shown slide back to hidden wrapper
+      const previous = stage.firstElementChild;
+      if (previous) {
+        previewer.wrapper.appendChild(previous);
+      }
+      // Move requested slide to stage
+      const slide = allSlides[index];
+      if (slide) {
+        stage.appendChild(slide);
+        _panX = 0;
+        _panY = 0;
+        applyTransform();
+      }
+    }
+
+    showSlide(0);
+
+    const prevBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-prev');
+    const nextBtn = container.querySelector<HTMLElement>('#gitpreview-ppt-next');
+
     const updatePage = () => {
-      if (pageIndicator && previewer) {
-        pageIndicator.textContent = `${(previewer.currentIndex || 0) + 1} / ${slideCount || 1}`;
+      if (pageIndicator) {
+        pageIndicator.textContent = `${currentIndex + 1} / ${slideCount || 1}`;
       }
     };
 
-    prevBtn?.addEventListener('click', () => {
-      if (!previewer) return;
-      previewer.renderPreSlide();
-      fitSlideToViewport();
+    const goNext = () => {
+      if (currentIndex >= slideCount - 1) return;
+      currentIndex++;
+      showSlide(currentIndex);
       updatePage();
-    });
+    };
 
-    nextBtn?.addEventListener('click', () => {
-      if (!previewer) return;
-      previewer.renderNextSlide();
-      fitSlideToViewport();
+    const goPrev = () => {
+      if (currentIndex <= 0) return;
+      currentIndex--;
+      showSlide(currentIndex);
       updatePage();
-    });
+    };
 
-    // Fullscreen toggle
+    prevBtn?.addEventListener('click', goPrev);
+    nextBtn?.addEventListener('click', goNext);
+
+    // ── Fullscreen ──────────────────────────────────
     const fullscreenBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-fullscreen');
     const slideContainer = container.querySelector<HTMLElement>('.gitpreview-ppt-slide-container');
     const fullIcon = container.querySelector<HTMLElement>('.gitpreview-ppt-fullscreen-icon');
@@ -196,11 +334,9 @@ export async function openPowerPointPreview(
           await slideContainer.requestFullscreen();
           fullIcon!.style.display = 'none';
           exitIcon!.style.display = 'block';
-        } catch { /* fullscreen not supported */ }
+        } catch { /* not supported */ }
       } else {
         await document.exitFullscreen();
-        fullIcon!.style.display = '';
-        exitIcon!.style.display = 'none';
       }
     });
 
@@ -209,38 +345,33 @@ export async function openPowerPointPreview(
         fullIcon!.style.display = '';
         exitIcon!.style.display = 'none';
       }
-      // Re-fit after fullscreen transition
-      setTimeout(fitSlideToViewport, 100);
+      setTimeout(() => applyTransform(), 150);
     });
-    window.addEventListener('resize', fitSlideToViewport);
+
+    window.addEventListener('resize', applyTransform);
 
     // Download
     const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
     downloadBtn?.addEventListener('click', () => {
       const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-      const downloadUrl = URL.createObjectURL(blob);
+      const dlUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = dlUrl;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
+      URL.revokeObjectURL(dlUrl);
     });
 
     // Keyboard navigation
     _boundKeydown = (e: KeyboardEvent) => {
-      if (!previewer) return;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault();
-        previewer.renderNextSlide();
-        fitSlideToViewport();
-        updatePage();
+        goNext();
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault();
-        previewer.renderPreSlide();
-        fitSlideToViewport();
-        updatePage();
+        goPrev();
       } else if (e.key === 'Escape' && document.fullscreenElement) {
         document.exitFullscreen();
       } else if (e.key === 'f' || e.key === 'F') {
@@ -265,17 +396,17 @@ export function closePowerPointPreview(): void {
     try {
       currentPreviewer.destroy();
     } catch {
-      // ignore cleanup errors
+      // ignore
     }
     currentPreviewer = null;
   }
-  currentContainer = null;
+  _activeViewport = null;
 }
 
 export const powerPointHandler: PreviewHandler = {
   extensions: ['pptx', 'ppt'],
   getBlobButtonSelector() {
-    return 'button[data-testid="download-raw-button"]';
+    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
   },
   openPreview(rawUrl: string, filename: string, container?: HTMLElement) {
     if (!container) return;
