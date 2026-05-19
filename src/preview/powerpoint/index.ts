@@ -1,4 +1,4 @@
-import { type PreviewHandler } from '../handler';
+import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
 import { escapeHTML, formatFileSize } from '../../utils';
 import { fetchBinary } from '../../lib/range-fetcher';
 import { renderErrorContent } from '../ui';
@@ -400,11 +400,10 @@ export function closePowerPointPreview(): void {
 
 export const powerPointHandler: PreviewHandler = {
   extensions: ['pptx', 'ppt'],
-  getBlobButtonSelector() {
-    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
-  },
+  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl: string, filename: string, container?: HTMLElement) {
     if (!container) return;
     openPowerPointPreview(rawUrl, filename, container);
   },
+  close: closePowerPointPreview,
 };

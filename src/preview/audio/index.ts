@@ -1,6 +1,8 @@
-import { type PreviewHandler } from '../handler';
-import { AUDIO_EXTENSIONS, escapeHTML, base64ToArrayBuffer } from '../../utils';
+import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { escapeHTML, base64ToArrayBuffer } from '../../utils';
 import { renderErrorContent } from '../ui';
+
+export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
 
 export function isAudioExtension(ext: string): boolean {
   return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
@@ -584,9 +586,7 @@ export function getVolume(): number {
 
 export const audioHandler: PreviewHandler = {
   extensions: AUDIO_EXTENSIONS,
-  getBlobButtonSelector() {
-    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
-  },
+  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
     if (!container) return;
     openAudioPreview(rawUrl, _filename, container).catch((err) => {
@@ -594,4 +594,5 @@ export const audioHandler: PreviewHandler = {
       container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load audio');
     });
   },
+  close: closeAudioPreview,
 };

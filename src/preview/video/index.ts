@@ -1,5 +1,7 @@
-import { type PreviewHandler } from '../handler';
-import { VIDEO_EXTENSIONS, escapeHTML } from '../../utils';
+import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { escapeHTML } from '../../utils';
+
+export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
 import { RangeFetcher, type FileInfo } from '../../lib/range-fetcher';
 import { base64ToArrayBuffer } from '../../utils';
 import { NetworkAware } from '../../lib/network-aware';
@@ -212,11 +214,10 @@ export function closeVideoPreview(): void {
 
 export const videoHandler: PreviewHandler = {
   extensions: VIDEO_EXTENSIONS,
-  getBlobButtonSelector() {
-    return 'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';
-  },
+  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
     if (!container) return;
     openVideoPreview(rawUrl, _filename, container);
   },
+  close: closeVideoPreview,
 };

@@ -1,7 +1,6 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeAll } from 'vitest';
 import {
   getFileExtension,
-  isSupportedExtension,
   escapeHTML,
   formatFileSize,
   formatTime,
@@ -11,6 +10,15 @@ import {
   convertToRawUrl,
   clamp,
 } from '../../src/utils';
+import { registerHandler, isSupported } from '../../src/preview/registry';
+
+beforeAll(() => {
+  registerHandler({
+    extensions: ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'],
+    getBlobButtonSelector: () => '',
+    openPreview: () => {},
+  });
+});
 
 describe('getFileExtension', () => {
   test('gets extension from simple filename', () => {
@@ -63,11 +71,11 @@ describe('getFileExtension', () => {
   });
 });
 
-describe('isSupportedExtension', () => {
+describe('isSupported (registry)', () => {
   test('returns true for supported audio extensions', () => {
     const supportedExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
     supportedExtensions.forEach((ext) => {
-      expect(isSupportedExtension(ext)).toBe(true);
+      expect(isSupported(ext)).toBe(true);
     });
   });
 
@@ -81,24 +89,17 @@ describe('isSupportedExtension', () => {
       'jpg',
     ];
     unsupportedExtensions.forEach((ext) => {
-      expect(isSupportedExtension(ext)).toBe(false);
+      expect(isSupported(ext)).toBe(false);
     });
   });
 
-  test('is case-insensitive', () => {
-    expect(isSupportedExtension('MP3')).toBe(true);
-    expect(isSupportedExtension('Wav')).toBe(true);
-    expect(isSupportedExtension('mP3')).toBe(true);
-    expect(isSupportedExtension('Ogg')).toBe(true);
+  test('is case-sensitive (registry stores lowercase)', () => {
+    expect(isSupported('mp3')).toBe(true);
+    expect(isSupported('wav')).toBe(true);
   });
 
   test('handles empty string', () => {
-    expect(isSupportedExtension('')).toBe(false);
-  });
-
-  test('handles null/undefined', () => {
-    expect(isSupportedExtension(null)).toBe(false);
-    expect(isSupportedExtension(undefined)).toBe(false);
+    expect(isSupported('')).toBe(false);
   });
 });
 

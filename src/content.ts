@@ -1,3 +1,14 @@
+/**
+ * GitPreview content script.
+ *
+ * To add a new preview type:
+ * 1. Create `src/preview/<type>/index.ts` exporting a PreviewHandler
+ * 2. Import it here and call `registerHandler(yourHandler)`
+ *
+ * That's it. The handler's lifecycle methods (openPreview, close)
+ * are managed automatically by the registry.
+ */
+
 import { isBlobPage, getFileExtension } from './utils';
 import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
@@ -6,7 +17,7 @@ import { fontHandler } from './preview/font/index';
 import { wordHandler } from './preview/word/index';
 import { excelHandler } from './preview/excel/index';
 import { powerPointHandler } from './preview/powerpoint/index';
-import { registerHandler, getHandler, isSupported } from './preview/registry';
+import { registerHandler, getHandler, isSupported, closeAllHandlers } from './preview/registry';
 import type { PreviewHandler } from './preview/handler';
 import {
   createPreviewButton,
@@ -17,12 +28,6 @@ import {
   showLoadingModal,
   getCurrentPreviewContent,
 } from './preview/ui';
-import { closeAudioPreview } from './preview/audio/index';
-import { closeVideoPreview } from './preview/video/index';
-import { closeFontPreview } from './preview/font/index';
-import { closeWordPreview } from './preview/word/index';
-import { closeExcelPreview } from './preview/excel/index';
-import { closePowerPointPreview } from './preview/powerpoint/index';
 import {
   togglePlay,
   rewind,
@@ -31,11 +36,12 @@ import {
   getVolume,
 } from './preview/audio/index';
 import { bindKeyboardShortcuts } from './preview/keyboard';
-import { convertToRawUrl } from './utils';
-import { isTreePage } from './utils';
+import { convertToRawUrl, isTreePage } from './utils';
 import './preview/preview.css';
 
-// Register all preview handlers
+// ── Register preview handlers ───────────────────────────────
+// Each handler is a self-contained module that knows which
+// file types it supports and how to render/cleanup previews.
 registerHandler(audioHandler);
 registerHandler(pdfHandler);
 registerHandler(videoHandler);
@@ -339,7 +345,7 @@ function openPreview(fileUrl: string, filename: string): void {
     return;
   }
 
-  // Container-based handlers (audio, video)
+  // Container-based handlers (audio, video, etc.)
   if (isTreePage(location.href)) {
     showLoadingModal(filename, closeAll);
   } else {
@@ -363,12 +369,10 @@ function closeAll(): void {
     _unbindKeyboardShortcuts();
     _unbindKeyboardShortcuts = null;
   }
-  closeAudioPreview();
-  closeVideoPreview();
-  closeFontPreview();
-  closeWordPreview();
-  closeExcelPreview();
-  closePowerPointPreview();
+
+  // Close all registered handlers (calls each handler's close() method)
+  closeAllHandlers();
+
   removeExistingPlayer();
   removeExistingModal();
 
