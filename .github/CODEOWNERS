@@ -1,0 +1,17 @@
+# Default owner
+* @adfnekc
+
+# Preview type handlers
+/src/preview/audio/ @adfnekc
+/src/preview/video/ @adfnekc
+/src/preview/pdf/ @adfnekc
+/src/preview/font/ @adfnekc
+/src/preview/word/ @adfnekc
+/src/preview/excel/ @adfnekc
+/src/preview/powerpoint/ @adfnekc
+
+# Core infrastructure
+/src/preview/handler.ts @adfnekc
+/src/preview/registry.ts @adfnekc
+/src/preview/ui.ts @adfnekc
+/src/lib/ @adfnekc

@@ -30,7 +30,7 @@ export class StreamVideoPlayer {
     this.container = container;
 
     // 获取文件元数据
-    this.fileInfo = fileInfo || await RangeFetcher.getFileInfo(this.url);
+    this.fileInfo = fileInfo || (await RangeFetcher.getFileInfo(this.url));
 
     // 清空之前的 loading 内容
     container.innerHTML = '';
@@ -119,20 +119,17 @@ export class StreamVideoPlayer {
     if (!this.video) return;
     // fallback: full fetch via existing binary fetch
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { action: 'fetchBinary', url: this.url },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          if (response.success) {
-            resolve(base64ToArrayBuffer(response.data));
-          } else {
-            reject(new Error(response.error || 'Failed to fetch'));
-          }
-        },
-      );
+      chrome.runtime.sendMessage({ action: 'fetchBinary', url: this.url }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (response.success) {
+          resolve(base64ToArrayBuffer(response.data));
+        } else {
+          reject(new Error(response.error || 'Failed to fetch'));
+        }
+      });
     });
 
     const blob = new Blob([arrayBuffer], { type: this.fileInfo?.mimeType || 'video/mp4' });
@@ -149,7 +146,11 @@ export class StreamVideoPlayer {
     }
     if (this.mediaSource) {
       if (this.mediaSource.readyState === 'open') {
-        try { this.mediaSource.endOfStream(); } catch { /* ignore */ }
+        try {
+          this.mediaSource.endOfStream();
+        } catch {
+          /* ignore */
+        }
       }
       this.mediaSource = null;
     }

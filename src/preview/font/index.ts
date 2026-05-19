@@ -91,7 +91,9 @@ export async function openFontPreview(
       });
     }
 
-    const weightSlider = container.querySelector<HTMLInputElement>('.gitpreview-font-weight-slider');
+    const weightSlider = container.querySelector<HTMLInputElement>(
+      '.gitpreview-font-weight-slider',
+    );
     const weightValue = container.querySelector<HTMLElement>('.gitpreview-font-weight-value');
     const weightTargets = container.querySelectorAll<HTMLElement>(
       '.gitpreview-font-custom, .gitpreview-font-sample-row',
@@ -102,15 +104,15 @@ export async function openFontPreview(
         const pct = ((+w - 100) / 800) * 100;
         weightValue.textContent = w;
         weightSlider.style.background = `linear-gradient(to right, #0969da 0%, #0969da ${pct}%, #d1d9e0 ${pct}%, #d1d9e0 100%)`;
-        weightTargets.forEach((el) => { el.style.fontWeight = w; });
+        weightTargets.forEach((el) => {
+          el.style.fontWeight = w;
+        });
       };
       weightSlider.addEventListener('input', updateWeight);
     }
   } catch (err) {
     console.error('GitPreview font error:', err);
-    container.innerHTML = renderErrorContent(
-      (err as Error).message || 'Failed to load font',
-    );
+    container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load font');
   }
 }
 

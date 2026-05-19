@@ -21,9 +21,7 @@ function getAudioMimeType(filename: string): string {
   return mimeTypes[ext] || 'audio/mpeg';
 }
 
-function fetchAudioFromBackground(
-  url: string,
-): Promise<ArrayBuffer> {
+function fetchAudioFromBackground(url: string): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
       chrome.runtime.sendMessage({ action: 'fetchAudio', url }, (response) => {
@@ -62,11 +60,7 @@ export class GitPreviewAudioPlayer {
   _boundDocumentClick: (() => void) | null = null;
   _boundWindowResize: (() => void) | null = null;
 
-  constructor(options: {
-    url: string;
-    filename: string;
-    arrayBuffer: ArrayBuffer;
-  }) {
+  constructor(options: { url: string; filename: string; arrayBuffer: ArrayBuffer }) {
     this.url = options.url;
     this.filename = options.filename || 'Audio File';
     this.arrayBuffer = options.arrayBuffer;
@@ -163,7 +157,9 @@ export class GitPreviewAudioPlayer {
     this._boundDocumentClick = () => this.closeMenu();
     this._boundWindowResize = () => this.drawWaveform();
     this.elements.playPauseBtn?.addEventListener('click', () => this.togglePlay());
-    this.elements.progressBar?.addEventListener('click', (e) => this.handleProgressClick(e as MouseEvent));
+    this.elements.progressBar?.addEventListener('click', (e) =>
+      this.handleProgressClick(e as MouseEvent),
+    );
     this.elements.volume?.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       this.setVolume(Number(target.value));
@@ -541,16 +537,15 @@ export function openAudioPreview(
     </div>
   `;
 
-  return fetchAudioFromBackground(url)
-    .then((arrayBuffer) => {
-      currentPlayer = new GitPreviewAudioPlayer({
-        arrayBuffer,
-        url,
-        filename,
-      });
-      container.innerHTML = '';
-      container.appendChild(currentPlayer.render());
+  return fetchAudioFromBackground(url).then((arrayBuffer) => {
+    currentPlayer = new GitPreviewAudioPlayer({
+      arrayBuffer,
+      url,
+      filename,
     });
+    container.innerHTML = '';
+    container.appendChild(currentPlayer.render());
+  });
 }
 
 export function closeAudioPreview(): void {

@@ -24,9 +24,12 @@ export function openPdfPreview(rawUrl: string, filename: string): void {
 
   const viewerUrl =
     chrome.runtime.getURL('pdf-viewer/web/viewer.html') +
-    '?rawUrl=' + encodeURIComponent(rawUrl) +
-    '&filename=' + encodeURIComponent(realFilename) +
-    '&title=' + encodeURIComponent(tabTitle);
+    '?rawUrl=' +
+    encodeURIComponent(rawUrl) +
+    '&filename=' +
+    encodeURIComponent(realFilename) +
+    '&title=' +
+    encodeURIComponent(tabTitle);
 
   chrome.runtime.sendMessage({ action: 'openPdfViewer', viewerUrl }, () => {
     if (chrome.runtime.lastError) {

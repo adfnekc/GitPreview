@@ -51,8 +51,12 @@ export async function openExcelPreview(
         const idx = (tab as HTMLElement).dataset.sheetIndex;
         if (!idx) return;
 
-        container.querySelectorAll('.gitpreview-excel-tab').forEach((t) => t.classList.remove('gitpreview-excel-tab-active'));
-        container.querySelectorAll('.gitpreview-excel-sheet').forEach((s) => s.classList.remove('gitpreview-excel-sheet-active'));
+        container
+          .querySelectorAll('.gitpreview-excel-tab')
+          .forEach((t) => t.classList.remove('gitpreview-excel-tab-active'));
+        container
+          .querySelectorAll('.gitpreview-excel-sheet')
+          .forEach((s) => s.classList.remove('gitpreview-excel-sheet-active'));
         tab.classList.add('gitpreview-excel-tab-active');
         const sheet = container.querySelector(`.gitpreview-excel-sheet[data-sheet-index="${idx}"]`);
         sheet?.classList.add('gitpreview-excel-sheet-active');

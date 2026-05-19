@@ -28,13 +28,7 @@ import {
   showLoadingModal,
   getCurrentPreviewContent,
 } from './preview/ui';
-import {
-  togglePlay,
-  rewind,
-  forward,
-  setVolume,
-  getVolume,
-} from './preview/audio/index';
+import { togglePlay, rewind, forward, setVolume, getVolume } from './preview/audio/index';
 import { bindKeyboardShortcuts } from './preview/keyboard';
 import { convertToRawUrl, isTreePage } from './utils';
 import './preview/preview.css';
@@ -207,9 +201,7 @@ function debounce<T extends (...args: any[]) => void>(
 // ── Tree page: icon buttons next to file links ──────────────
 
 function addPreviewButtons(): void {
-  const blobLinks = document.querySelectorAll<HTMLAnchorElement>(
-    'a[href*="/blob/"]',
-  );
+  const blobLinks = document.querySelectorAll<HTMLAnchorElement>('a[href*="/blob/"]');
 
   blobLinks.forEach((link) => {
     if (link.classList.contains('gitpreview-link-processed')) return;
@@ -279,14 +271,9 @@ function handleBlobPage(): void {
   }
 }
 
-function insertBlobPageButton(
-  btn: HTMLElement,
-  handler: PreviewHandler,
-): boolean {
+function insertBlobPageButton(btn: HTMLElement, handler: PreviewHandler): boolean {
   // Position button before the element the handler specifies
-  const target = document.querySelector<HTMLAnchorElement>(
-    handler.getBlobButtonSelector(),
-  );
+  const target = document.querySelector<HTMLAnchorElement>(handler.getBlobButtonSelector());
   if (target?.parentElement) {
     target.parentElement.insertBefore(btn, target);
     log('insertBlobPageButton — inserted before target selector');

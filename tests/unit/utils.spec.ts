@@ -32,14 +32,10 @@ describe('getFileExtension', () => {
 
   test('gets extension from URL path', () => {
     expect(getFileExtension('/user/repo/blob/main/audio/test.mp3')).toBe('mp3');
-    expect(
-      getFileExtension('https://github.com/user/repo/blob/main/audio/test.wav'),
-    ).toBe('wav');
-    expect(
-      getFileExtension(
-        'https://github.com/user/repo/blob/main/music.ogg?raw=true',
-      ),
-    ).toBe('ogg');
+    expect(getFileExtension('https://github.com/user/repo/blob/main/audio/test.wav')).toBe('wav');
+    expect(getFileExtension('https://github.com/user/repo/blob/main/music.ogg?raw=true')).toBe(
+      'ogg',
+    );
   });
 
   test('handles files without extension', () => {
@@ -80,14 +76,7 @@ describe('isSupported (registry)', () => {
   });
 
   test('returns false for unsupported extensions', () => {
-    const unsupportedExtensions = [
-      'txt',
-      'js',
-      'css',
-      'html',
-      'png',
-      'jpg',
-    ];
+    const unsupportedExtensions = ['txt', 'js', 'css', 'html', 'png', 'jpg'];
     unsupportedExtensions.forEach((ext) => {
       expect(isSupported(ext)).toBe(false);
     });
@@ -236,12 +225,8 @@ describe('formatTime', () => {
 
 describe('isBlobPage', () => {
   test('returns true for blob page URLs', () => {
-    expect(
-      isBlobPage('https://github.com/user/repo/blob/main/file.mp3'),
-    ).toBe(true);
-    expect(
-      isBlobPage('https://github.com/user/repo/blob/develop/audio.wav'),
-    ).toBe(true);
+    expect(isBlobPage('https://github.com/user/repo/blob/main/file.mp3')).toBe(true);
+    expect(isBlobPage('https://github.com/user/repo/blob/develop/audio.wav')).toBe(true);
     expect(isBlobPage('/user/repo/blob/main/test.ogg')).toBe(true);
   });
 
@@ -262,17 +247,13 @@ describe('isBlobPage', () => {
 describe('isTreePage', () => {
   test('returns true for tree page URLs', () => {
     expect(isTreePage('https://github.com/user/repo/tree/main')).toBe(true);
-    expect(
-      isTreePage('https://github.com/user/repo/tree/develop/audio'),
-    ).toBe(true);
+    expect(isTreePage('https://github.com/user/repo/tree/develop/audio')).toBe(true);
     expect(isTreePage('/user/repo/tree/main')).toBe(true);
   });
 
   test('returns false for non-tree URLs', () => {
     expect(isTreePage('https://github.com/user/repo')).toBe(false);
-    expect(
-      isTreePage('https://github.com/user/repo/blob/main/file.mp3'),
-    ).toBe(false);
+    expect(isTreePage('https://github.com/user/repo/blob/main/file.mp3')).toBe(false);
     expect(isTreePage('https://github.com')).toBe(false);
     expect(isTreePage('/user/repo/blob/main')).toBe(false);
   });
@@ -286,30 +267,20 @@ describe('isTreePage', () => {
 
 describe('extractFilenameFromUrl', () => {
   test('extracts filename from URL', () => {
-    expect(
-      extractFilenameFromUrl(
-        'https://github.com/user/repo/blob/main/test.mp3',
-      ),
-    ).toBe('test.mp3');
-    expect(
-      extractFilenameFromUrl(
-        'https://github.com/user/repo/blob/main/audio.wav',
-      ),
-    ).toBe('audio.wav');
-    expect(extractFilenameFromUrl('/user/repo/blob/main/music.ogg')).toBe(
-      'music.ogg',
+    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/test.mp3')).toBe(
+      'test.mp3',
     );
+    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/audio.wav')).toBe(
+      'audio.wav',
+    );
+    expect(extractFilenameFromUrl('/user/repo/blob/main/music.ogg')).toBe('music.ogg');
   });
 
   test('handles URLs with query parameters', () => {
-    expect(
-      extractFilenameFromUrl(
-        'https://github.com/user/repo/blob/main/test.mp3?raw=true',
-      ),
-    ).toBe('test.mp3');
-    expect(
-      extractFilenameFromUrl('/user/repo/blob/main/audio.wav?foo=bar'),
-    ).toBe('audio.wav');
+    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/test.mp3?raw=true')).toBe(
+      'test.mp3',
+    );
+    expect(extractFilenameFromUrl('/user/repo/blob/main/audio.wav?foo=bar')).toBe('audio.wav');
   });
 
   test('handles simple paths', () => {
@@ -326,13 +297,13 @@ describe('extractFilenameFromUrl', () => {
 
 describe('convertToRawUrl', () => {
   test('converts blob URL to raw URL', () => {
-    expect(
-      convertToRawUrl('https://github.com/user/repo/blob/main/test.mp3'),
-    ).toBe('https://raw.githubusercontent.com/user/repo/main/test.mp3');
+    expect(convertToRawUrl('https://github.com/user/repo/blob/main/test.mp3')).toBe(
+      'https://raw.githubusercontent.com/user/repo/main/test.mp3',
+    );
 
-    expect(
-      convertToRawUrl('https://github.com/user/repo/blob/develop/audio.wav'),
-    ).toBe('https://raw.githubusercontent.com/user/repo/develop/audio.wav');
+    expect(convertToRawUrl('https://github.com/user/repo/blob/develop/audio.wav')).toBe(
+      'https://raw.githubusercontent.com/user/repo/develop/audio.wav',
+    );
   });
 
   test('handles null/undefined/empty', () => {

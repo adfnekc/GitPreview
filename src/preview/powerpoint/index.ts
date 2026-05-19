@@ -189,13 +189,19 @@ export async function openPowerPointPreview(
 
     zoomIn?.addEventListener('click', () => {
       _zoomLevel = Math.min(5, _zoomLevel + 0.1);
-      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
+      if (_zoomLevel <= 1) {
+        _panX = 0;
+        _panY = 0;
+      }
       applyTransform();
     });
 
     zoomOut?.addEventListener('click', () => {
       _zoomLevel = Math.max(0.1, _zoomLevel - 0.1);
-      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
+      if (_zoomLevel <= 1) {
+        _panX = 0;
+        _panY = 0;
+      }
       applyTransform();
     });
 
@@ -208,17 +214,23 @@ export async function openPowerPointPreview(
     });
 
     // ── Touchpad / pinch-to-zoom ─────────────────────
-    viewport.addEventListener('wheel', (e: WheelEvent) => {
-      if (!e.ctrlKey) return;
-      e.preventDefault();
-      const delta = -e.deltaY;
-      const factor = 1 + Math.abs(delta) / 200;
-      _zoomLevel = delta > 0
-        ? Math.min(5, _zoomLevel * factor)
-        : Math.max(0.1, _zoomLevel / factor);
-      if (_zoomLevel <= 1) { _panX = 0; _panY = 0; }
-      applyTransform();
-    }, { passive: false });
+    viewport.addEventListener(
+      'wheel',
+      (e: WheelEvent) => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const delta = -e.deltaY;
+        const factor = 1 + Math.abs(delta) / 200;
+        _zoomLevel =
+          delta > 0 ? Math.min(5, _zoomLevel * factor) : Math.max(0.1, _zoomLevel / factor);
+        if (_zoomLevel <= 1) {
+          _panX = 0;
+          _panY = 0;
+        }
+        applyTransform();
+      },
+      { passive: false },
+    );
 
     // ── Mouse drag panning ───────────────────────────
     viewport.addEventListener('mousedown', (e: MouseEvent) => {
@@ -316,7 +328,9 @@ export async function openPowerPointPreview(
           await slideContainer.requestFullscreen();
           fullIcon!.style.display = 'none';
           exitIcon!.style.display = 'block';
-        } catch { /* not supported */ }
+        } catch {
+          /* not supported */
+        }
       } else {
         await document.exitFullscreen();
       }
@@ -336,7 +350,9 @@ export async function openPowerPointPreview(
     // Download
     const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
     downloadBtn?.addEventListener('click', () => {
-      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const blob = new Blob([arrayBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      });
       const dlUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = dlUrl;

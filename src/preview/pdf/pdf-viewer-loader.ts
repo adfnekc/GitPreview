@@ -91,12 +91,14 @@ interface FetchBinaryResponse {
         bytes[i] = binary.charCodeAt(i);
       }
 
-      const app = (window as any).PDFViewerApplication as {
-        initializedPromise?: Promise<void>;
-        url?: string;
-        _downloadUrl?: string;
-        open: (args: { data: Uint8Array }) => Promise<void>;
-      } | undefined;
+      const app = (window as any).PDFViewerApplication as
+        | {
+            initializedPromise?: Promise<void>;
+            url?: string;
+            _downloadUrl?: string;
+            open: (args: { data: Uint8Array }) => Promise<void>;
+          }
+        | undefined;
       if (!app) throw new Error('PDFViewerApplication not available');
 
       // Remove loading overlay
@@ -117,8 +119,9 @@ interface FetchBinaryResponse {
       console.error('GitPreview PDF load error:', err);
       overlay.querySelector('.gp-spinner')?.remove();
       const textEl = overlay.querySelector('.gp-loading-text');
-      if (textEl) textEl.textContent =
-        'Failed to load PDF: ' + (err instanceof Error ? err.message : String(err));
+      if (textEl)
+        textEl.textContent =
+          'Failed to load PDF: ' + (err instanceof Error ? err.message : String(err));
     }
   })();
 })();

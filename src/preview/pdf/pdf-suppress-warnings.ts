@@ -20,9 +20,7 @@ const FILTER_PATTERNS = [
 
 (function () {
   function shouldSuppress(args: unknown[]): boolean {
-    const combined = args
-      .map((a) => (typeof a === 'string' ? a : ''))
-      .join(' ');
+    const combined = args.map((a) => (typeof a === 'string' ? a : '')).join(' ');
     return FILTER_PATTERNS.some((p) => combined.includes(p));
   }
 
@@ -40,9 +38,7 @@ const FILTER_PATTERNS = [
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
     const message =
-      typeof reason === 'string'
-        ? reason
-        : reason?.message ?? reason?.toString?.() ?? '';
+      typeof reason === 'string' ? reason : (reason?.message ?? reason?.toString?.() ?? '');
     if (typeof message === 'string' && FILTER_PATTERNS.some((p) => message.includes(p))) {
       event.preventDefault();
     }
