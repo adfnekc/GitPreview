@@ -11,6 +11,8 @@
 
 import { getFileExtension } from './utils';
 import { getActiveSite } from './sites/index';
+import { debug } from './lib/logger';
+import { debounce } from './lib/debounce';
 import type { SiteAdapter } from './sites/types';
 import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
@@ -55,18 +57,14 @@ let _currentPreviewBlobPath: string | null = null;
 let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
 let _unbindKeyboardShortcuts: (() => void) | null = null;
 
-function log(...args: unknown[]): void {
-  console.log('[GitPreview]', ...args);
-}
-
 function init(): void {
   if (isInitialized) return;
   if (!getActiveSite()) {
-    log('init — unsupported site, skipping');
+    debug('init — unsupported site, skipping');
     return;
   }
   isInitialized = true;
-  log('init — start');
+  debug('init — start');
 
   loadSettings()
     .then(() => {
@@ -80,7 +78,7 @@ function init(): void {
         setVolume,
         getVolume,
       });
-      log('init — ready');
+      debug('init — ready');
     })
     .catch((err) => {
       console.error('GitPreview: Initialization error:', err);
@@ -106,8 +104,9 @@ function loadSettings(): Promise<void> {
 // ── Page observation ────────────────────────────────────────
 
 function observePageChanges(): void {
+  const scheduleAddButtons = debounce(addPreviewButtons, 200);
   const observer = new MutationObserver(() => {
-    debounce(addPreviewButtons, 200)();
+    scheduleAddButtons();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
@@ -140,13 +139,13 @@ function onUrlChanged(): void {
   const site = getActiveSite();
   const newBlobPath = site ? site.getBlobPath(location.href) : null;
   if (_currentPreviewBlobPath && newBlobPath === _currentPreviewBlobPath) {
-    log('onUrlChanged — same blob file, skipping cleanup:', newBlobPath);
+    debug('onUrlChanged — same blob file, skipping cleanup:', newBlobPath);
     return;
   }
 
   _urlChangeTimer = setTimeout(() => {
     _urlChangeTimer = null;
-    log('onUrlChanged — executing cleanup, new url:', location.href);
+    debug('onUrlChanged — executing cleanup, new url:', location.href);
     closeAll();
     document.querySelectorAll('.gitpreview-link-processed').forEach((el) => {
       el.classList.remove('gitpreview-link-processed');
@@ -180,23 +179,12 @@ function retryBlobPage(maxRetries = 8, interval = 400): void {
 
     if (!document.querySelector('.gitpreview-blob-preview-btn') && retries > 0) {
       retries--;
-      log('retryBlobPage — retries left:', retries);
+      debug('retryBlobPage — retries left:', retries);
       setTimeout(tryHandle, interval);
     }
   }
 
   tryHandle();
-}
-
-function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<T>) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => func(...args), wait);
-  };
 }
 
 // ── Tree page: icon buttons next to file links ──────────────
@@ -218,7 +206,7 @@ function addPreviewButtons(): void {
     if (!isSupported(extension)) return;
 
     link.classList.add('gitpreview-link-processed');
-    log('addPreviewButtons — adding button for:', href);
+    debug('addPreviewButtons — adding button for:', href);
 
     const btn = createPreviewButton(href, site.getLinkFilename(link), true, openPreview);
     site.mountTreeButton(link, btn);
@@ -229,7 +217,7 @@ function addPreviewButtons(): void {
 
 function handleBlobPage(): void {
   if (document.querySelector('.gitpreview-blob-preview-btn')) {
-    log('handleBlobPage — button already exists, skip');
+    debug('handleBlobPage — button already exists, skip');
     return;
   }
 
@@ -242,12 +230,12 @@ function handleBlobPage(): void {
   const extension = getFileExtension(url);
   const handler = getHandler(extension);
   if (!handler) {
-    log('handleBlobPage — no handler for:', extension);
+    debug('handleBlobPage — no handler for:', extension);
     return;
   }
 
   const filename = decodeURIComponent(url.split('/').pop()!.split('?')[0]);
-  log('handleBlobPage — setting up for:', filename);
+  debug('handleBlobPage — setting up for:', filename);
 
   const btn = createPreviewButton(url, filename, false, openPreview);
   btn.classList.add('gitpreview-blob-preview-btn');
@@ -258,7 +246,7 @@ function handleBlobPage(): void {
   }
 
   if (!insertBlobPageButton(btn, site)) {
-    log('handleBlobPage — FAILED to find any insertion target, no button');
+    debug('handleBlobPage — FAILED to find any insertion target, no button');
     return;
   }
 
@@ -279,7 +267,7 @@ function insertBlobPageButton(btn: HTMLElement, site: SiteAdapter): boolean {
     } else {
       el.appendChild(btn);
     }
-    log('insertBlobPageButton — inserted via:', selector);
+    debug('insertBlobPageButton — inserted via:', selector);
     return true;
   }
 
@@ -288,7 +276,7 @@ function insertBlobPageButton(btn: HTMLElement, site: SiteAdapter): boolean {
   );
   if (blobHeader) {
     blobHeader.appendChild(btn);
-    log('insertBlobPageButton — inserted via last-resort fallback');
+    debug('insertBlobPageButton — inserted via last-resort fallback');
     return true;
   }
 
@@ -303,7 +291,7 @@ function openPreview(fileUrl: string, filename: string): void {
 
   const rawUrl = site.toRawUrl(fileUrl);
   if (!rawUrl) {
-    log('openPreview — cannot resolve raw url for:', fileUrl);
+    debug('openPreview — cannot resolve raw url for:', fileUrl);
     return;
   }
 
@@ -311,7 +299,7 @@ function openPreview(fileUrl: string, filename: string): void {
   const handler = getHandler(ext);
   if (!handler) return;
 
-  log('openPreview —', filename, 'handler:', ext);
+  debug('openPreview —', filename, 'handler:', ext);
 
   // Track current preview to protect against SPA URL blips
   const blobPath = site.getBlobPath(fileUrl);
@@ -328,7 +316,7 @@ function openPreview(fileUrl: string, filename: string): void {
     showLoadingModal(filename, closeAll);
   } else {
     if (document.getElementById('gitpreview-inline')) {
-      log('openPreview — toggling off, already open');
+      debug('openPreview — toggling off, already open');
       closeAll();
       return;
     }
@@ -342,7 +330,7 @@ function openPreview(fileUrl: string, filename: string): void {
 }
 
 function closeAll(): void {
-  log('closeAll — closing previews');
+  debug('closeAll — closing previews');
   if (_unbindKeyboardShortcuts) {
     _unbindKeyboardShortcuts();
     _unbindKeyboardShortcuts = null;
@@ -364,7 +352,7 @@ function closeAll(): void {
   });
 
   _currentPreviewBlobPath = null;
-  log('closeAll — done');
+  debug('closeAll — done');
 }
 
 // ── Boot ────────────────────────────────────────────────────
