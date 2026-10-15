@@ -29,11 +29,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
       });
       return true;
-    case 'getRawFileUrl': {
-      const rawUrl = convertToRawUrl(request.url);
-      sendResponse({ rawUrl });
-      return true;
-    }
     case 'fetchAudio':
       fetchAudio(request.url, sendResponse);
       return true;
@@ -124,10 +119,76 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function convertToRawUrl(githubUrl: string): string {
-  const isBlob = githubUrl.includes('blob');
-  if (!isBlob) return githubUrl;
-  let rawUrl = githubUrl.replace('github.com', 'raw.githubusercontent.com');
-  rawUrl = rawUrl.replace('/blob/', '/');
-  return rawUrl;
+// ── Self-hosted GitLab instances ────────────────────────────
+
+const GITLAB_INSTANCES_KEY = 'gitlabInstances';
+const INSTANCE_SCRIPT_PREFIX = 'gitpreview-gitlab-';
+
+function instanceScriptId(origin: string): string {
+  let host = origin;
+  try {
+    host = new URL(origin).host;
+  } catch {
+    /* keep origin */
+  }
+  return INSTANCE_SCRIPT_PREFIX + host.replace(/[^a-z0-9.-]/gi, '_');
 }
+
+function getInstanceOrigins(): Promise<string[]> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get({ [GITLAB_INSTANCES_KEY]: [] }, (result) => {
+      resolve((result[GITLAB_INSTANCES_KEY] as string[]) ?? []);
+    });
+  });
+}
+
+async function syncInstanceContentScripts(): Promise<void> {
+  if (!chrome.scripting?.getRegisteredContentScripts) return;
+
+  const origins = await getInstanceOrigins();
+
+  const granted = new Map<string, string>(); // scriptId -> origin
+  for (const origin of origins) {
+    const hasPermission = await chrome.permissions.contains({ origins: [`${origin}/*`] });
+    if (hasPermission) granted.set(instanceScriptId(origin), origin);
+  }
+
+  const existing = await chrome.scripting.getRegisteredContentScripts();
+  const existingIds = new Set(existing.map((script) => script.id));
+
+  const staleIds = existing
+    .map((script) => script.id)
+    .filter((id) => id.startsWith(INSTANCE_SCRIPT_PREFIX) && !granted.has(id));
+  if (staleIds.length > 0) {
+    await chrome.scripting.unregisterContentScripts({ ids: staleIds });
+  }
+
+  const toRegister = Array.from(granted.entries())
+    .filter(([id]) => !existingIds.has(id))
+    .map(([id, origin]) => ({
+      id,
+      matches: [`${origin}/*`],
+      js: ['content.js'],
+      css: ['content.css'],
+      runAt: 'document_idle' as const,
+      persistAcrossSessions: true,
+    }));
+
+  if (toRegister.length > 0) {
+    await chrome.scripting.registerContentScripts(toRegister);
+  }
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  void syncInstanceContentScripts();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void syncInstanceContentScripts();
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes[GITLAB_INSTANCES_KEY]) {
+    void syncInstanceContentScripts();
+  }
+});
