@@ -23,14 +23,13 @@ src/preview/<type>/index.ts
 ```
 
 ```ts
-import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { type PreviewHandler } from '../handler';
 import { renderErrorContent } from '../ui';
 
 const EXTENSIONS = ['ext1', 'ext2'];
 
 export const myHandler: PreviewHandler = {
   extensions: EXTENSIONS,
-  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl, filename, container) {
     if (!container) return;
     try {
@@ -96,7 +95,15 @@ src/
     word/             ← DOCX → HTML (mammoth.js).
     excel/            ← XLSX → HTML table (SheetJS).
     powerpoint/       ← PPTX slide viewer (pptx-preview).
+  sites/              ← Site adapters (GitHub, GitLab) + detection.
 ```
+
+## Adding a new site
+
+1. Create `src/sites/<site>.ts` exporting a `SiteAdapter`
+2. Register it in the `ADAPTERS` array in `src/sites/index.ts`
+
+The adapter owns page detection, blob→raw URL conversion, DOM selectors, and button mounting. Handlers and the preview UI stay site-agnostic.
 
 ## Testing
 

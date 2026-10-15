@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/logo.png" alt="GitPreview" width="128">
   <h1>GitPreview</h1>
-  <p><b>Preview 20+ file types directly on GitHub.</b> No downloads. No new tabs. Just click and view.</p>
+  <p><b>Preview 20+ file types directly on GitHub and GitLab.</b> No downloads. No new tabs. Just click and view.</p>
 
   <img src="assets/demo.gif" alt="Demo" width="600">
 
@@ -14,13 +14,19 @@
 
 ---
 
-Tired of downloading files just to see what's inside them? GitPreview renders audio, video, PDF, Office documents, fonts, and more — right inside your GitHub repository page.
+Tired of downloading files just to see what's inside them? GitPreview renders audio, video, PDF, Office documents, fonts, and more — right inside your GitHub or GitLab repository page.
 
 ## Quick start
 
 1. **Install** the extension (Chrome / Firefox)
-2. **Visit** any GitHub repository
+2. **Visit** any GitHub or GitLab repository
 3. **Click** a supported file — preview loads automatically
+
+### Self-hosted GitLab
+
+1. Open the extension's **Options** page
+2. Enter your instance URL (for example `https://gitlab.example.com`) and click **Add instance**
+3. Grant access when the browser asks — previews then work on that instance
 
 ## Supported formats
 
@@ -52,7 +58,7 @@ npm run build        # Production build to dist/
 
 Load unpacked from `dist/` in Chrome Extensions (`chrome://extensions` → Developer mode → Load unpacked).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new preview types.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new preview types or support a new site.
 
 ## License
 
