@@ -34,4 +34,11 @@ export default tseslint.config(
     files: ['tests/**/*.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 'off', 'no-console': 'off' },
   },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+    },
+    rules: { 'no-console': 'off' },
+  },
 );

@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release (e.g. v1.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+      - name: Build artifacts (Chrome zip + Firefox zip)
+        run: npm run pack:zip
+
+      - name: Read version
+        id: ver
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.ver.outputs.version }}"
+          FILES="release/gitpreview-v${{ steps.ver.outputs.version }}-chrome.zip release/gitpreview-v${{ steps.ver.outputs.version }}-firefox.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" $FILES --clobber
+          else
+            gh release create "$TAG" $FILES --title "GitPreview $TAG" --generate-notes
+          fi
+
+      # ── Chrome Web Store ────────────────────────────────────────────────
+      # Secrets: CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN,
+      #          CWS_EXTENSION_ID, CWS_PUBLISHER_ID
+      - name: Publish to Chrome Web Store
+        if: ${{ secrets.CWS_CLIENT_ID != '' }}
+        env:
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+        run: |
+          ZIP="release/gitpreview-v${{ steps.ver.outputs.version }}-chrome.zip"
+          npx --yes chrome-webstore-upload-cli@4 upload --source "$ZIP"
+          npx --yes chrome-webstore-upload-cli@4 publish
+
+      # ── Firefox Add-ons (AMO) ───────────────────────────────────────────
+      # Secrets: AMO_API_KEY (JWT issuer), AMO_API_SECRET (JWT secret)
+      - name: Publish to Firefox AMO
+        if: ${{ secrets.AMO_API_KEY != '' }}
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+        run: |
+          npx --yes web-ext@10 sign \
+            --source-dir dist \
+            --artifacts-dir web-ext-artifacts \
+            --channel listed \
+            --api-key "$WEB_EXT_API_KEY" \
+            --api-secret "$WEB_EXT_API_SECRET"
+
+      # ── Microsoft Edge Add-ons ──────────────────────────────────────────
+      # Secrets: EDGE_PRODUCT_ID, EDGE_CLIENT_ID, EDGE_CLIENT_SECRET,
+      #          EDGE_ACCESS_TOKEN_URL
+      - name: Publish to Microsoft Edge Add-ons
+        if: ${{ secrets.EDGE_CLIENT_ID != '' }}
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
+          EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+          RELEASE_NOTES: GitPreview v${{ steps.ver.outputs.version }}
+        run: |
+          npm i --no-save edge-addons-api@0.6
+          node scripts/publish-edge.mjs "release/gitpreview-v${{ steps.ver.outputs.version }}-chrome.zip"
+
+      # ── Opera ───────────────────────────────────────────────────────────
+      # Opera Add-ons has no public upload API; publish manually at
+      # https://addons.opera.com/developer/ using the Chrome zip.
+      # Brave and Vivaldi install from the Chrome Web Store, so no extra step.

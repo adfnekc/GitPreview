@@ -1,6 +1,8 @@
-import { GITLAB_INSTANCES_KEY, instanceScriptId } from '../lib/instances';
-
 export {};
+
+// Kept as a local constant (rather than importing `lib/instances`) so the
+// options bundle does not share a chunk with the background worker.
+const GITLAB_INSTANCES_KEY = 'gitlabInstances';
 
 const input = document.getElementById('instance-input') as HTMLInputElement;
 const addBtn = document.getElementById('add-btn') as HTMLButtonElement;
@@ -101,7 +103,13 @@ async function removeInstance(origin: string): Promise<void> {
   await saveInstances(instances.filter((item) => item !== origin));
 
   try {
-    await chrome.scripting.unregisterContentScripts({ ids: [instanceScriptId(origin)] });
+    const scripts = await chrome.scripting.getRegisteredContentScripts();
+    const ids = scripts
+      .filter((script) => script.matches?.includes(`${origin}/*`))
+      .map((script) => script.id);
+    if (ids.length > 0) {
+      await chrome.scripting.unregisterContentScripts({ ids });
+    }
   } catch {
     /* script was not registered */
   }

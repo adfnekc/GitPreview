@@ -6,8 +6,8 @@
   <img src="assets/demo.gif" alt="Demo" width="600">
 
   <p>
-    <a href=""><img src="https://img.shields.io/badge/Chrome-Install-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Web Store"></a>
-    <a href=""><img src="https://img.shields.io/badge/Firefox-Install-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox Add-ons"></a>
+    <a href="https://github.com/adfnekc/GitPreview/releases"><img src="https://img.shields.io/badge/Chrome-Install-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Web Store"></a>
+    <a href="https://github.com/adfnekc/GitPreview/releases"><img src="https://img.shields.io/badge/Firefox-Install-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox Add-ons"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   </p>
 </div>
@@ -57,6 +57,14 @@ npm run build        # Production build to dist/
 ```
 
 Load unpacked from `dist/` in Chrome Extensions (`chrome://extensions` → Developer mode → Load unpacked).
+
+### Releasing
+
+```bash
+npm run release:artifacts   # -> release/: .crx, chrome.zip, firefox.zip
+```
+
+See [docs/RELEASING.md](docs/RELEASING.md) for store publishing (Chrome Web Store, Firefox AMO, Microsoft Edge Add-ons, Opera).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new preview types or support a new site.
 
