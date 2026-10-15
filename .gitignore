@@ -2,12 +2,20 @@ node_modules/
 coverage/
 test-results/
 playwright-report/
-tests/e2e/github-auth-state.json
+
+# Build / packaging output
 dist/
+release/
+web-ext-artifacts/
 gitpreview.zip
 gitpreview.pem
 gitpreview.crx
-release/*.crx
-release/*.zip
-release/*.xpi
+
+# Signing key (never commit)
 keys/
+
+# Local agent/editor state
+.claude/
+
+# Saved browser session used by e2e auth-setup (contains cookies)
+tests/e2e/github-auth-state.json
