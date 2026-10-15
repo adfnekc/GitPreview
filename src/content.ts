@@ -9,7 +9,9 @@
  * are managed automatically by the registry.
  */
 
-import { isBlobPage, getFileExtension } from './utils';
+import { getFileExtension } from './utils';
+import { getActiveSite } from './sites/index';
+import type { SiteAdapter } from './sites/types';
 import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
 import { videoHandler } from './preview/video/index';
@@ -18,7 +20,6 @@ import { wordHandler } from './preview/word/index';
 import { excelHandler } from './preview/excel/index';
 import { powerPointHandler } from './preview/powerpoint/index';
 import { registerHandler, getHandler, isSupported, closeAllHandlers } from './preview/registry';
-import type { PreviewHandler } from './preview/handler';
 import {
   createPreviewButton,
   updatePreviewButtonState,
@@ -30,7 +31,6 @@ import {
 } from './preview/ui';
 import { togglePlay, rewind, forward, setVolume, getVolume } from './preview/audio/index';
 import { bindKeyboardShortcuts } from './preview/keyboard';
-import { convertToRawUrl, isTreePage } from './utils';
 import './preview/preview.css';
 
 // ── Register preview handlers ───────────────────────────────
@@ -55,17 +55,16 @@ let _currentPreviewBlobPath: string | null = null;
 let _urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
 let _unbindKeyboardShortcuts: (() => void) | null = null;
 
-function getBlobFilePath(url: string): string | null {
-  const m = url.match(/\/blob\/(.+?)(?:\?|#|$)/);
-  return m ? m[1] : null;
-}
-
 function log(...args: unknown[]): void {
   console.log('[GitPreview]', ...args);
 }
 
 function init(): void {
   if (isInitialized) return;
+  if (!getActiveSite()) {
+    log('init — unsupported site, skipping');
+    return;
+  }
   isInitialized = true;
   log('init — start');
 
@@ -138,7 +137,8 @@ function observePageChanges(): void {
 function onUrlChanged(): void {
   if (_urlChangeTimer) clearTimeout(_urlChangeTimer);
 
-  const newBlobPath = getBlobFilePath(location.href);
+  const site = getActiveSite();
+  const newBlobPath = site ? site.getBlobPath(location.href) : null;
   if (_currentPreviewBlobPath && newBlobPath === _currentPreviewBlobPath) {
     log('onUrlChanged — same blob file, skipping cleanup:', newBlobPath);
     return;
@@ -168,11 +168,12 @@ function onUrlChanged(): void {
 }
 
 function retryBlobPage(maxRetries = 8, interval = 400): void {
-  if (!isBlobPage(location.href)) return;
+  const site = getActiveSite();
+  if (!site?.isBlobPage(location.href)) return;
   let retries = maxRetries;
 
   function tryHandle(): void {
-    if (!isBlobPage(location.href)) return;
+    if (!site?.isBlobPage(location.href)) return;
     if (document.querySelector('.gitpreview-blob-preview-btn')) return;
 
     handleBlobPage();
@@ -201,10 +202,14 @@ function debounce<T extends (...args: any[]) => void>(
 // ── Tree page: icon buttons next to file links ──────────────
 
 function addPreviewButtons(): void {
-  const blobLinks = document.querySelectorAll<HTMLAnchorElement>('a[href*="/blob/"]');
+  const site = getActiveSite();
+  if (!site) return;
 
-  blobLinks.forEach((link) => {
+  const fileLinks = document.querySelectorAll<HTMLAnchorElement>(site.fileLinkSelector);
+
+  fileLinks.forEach((link) => {
     if (link.classList.contains('gitpreview-link-processed')) return;
+    if (!site.isFileLink(link)) return;
 
     const href = link.getAttribute('href');
     if (!href) return;
@@ -215,19 +220,8 @@ function addPreviewButtons(): void {
     link.classList.add('gitpreview-link-processed');
     log('addPreviewButtons — adding button for:', href);
 
-    const btn = createPreviewButton(
-      href,
-      link.textContent?.trim() || href.split('/').pop() || '',
-      true,
-      openPreview,
-    );
-
-    const truncateContainer = link.closest('.react-directory-truncate');
-    if (truncateContainer) {
-      truncateContainer.appendChild(btn);
-    } else {
-      link.after(btn);
-    }
+    const btn = createPreviewButton(href, site.getLinkFilename(link), true, openPreview);
+    site.mountTreeButton(link, btn);
   });
 }
 
@@ -239,8 +233,11 @@ function handleBlobPage(): void {
     return;
   }
 
+  const site = getActiveSite();
+  if (!site) return;
+
   const url = location.href;
-  if (!isBlobPage(url)) return;
+  if (!site.isBlobPage(url)) return;
 
   const extension = getFileExtension(url);
   const handler = getHandler(extension);
@@ -260,7 +257,7 @@ function handleBlobPage(): void {
     updatePreviewButtonState(btn, true);
   }
 
-  if (!insertBlobPageButton(btn, handler)) {
+  if (!insertBlobPageButton(btn, site)) {
     log('handleBlobPage — FAILED to find any insertion target, no button');
     return;
   }
@@ -271,41 +268,27 @@ function handleBlobPage(): void {
   }
 }
 
-function insertBlobPageButton(btn: HTMLElement, handler: PreviewHandler): boolean {
-  // Position button before the element the handler specifies
-  const target = document.querySelector<HTMLAnchorElement>(handler.getBlobButtonSelector());
-  if (target?.parentElement) {
-    target.parentElement.insertBefore(btn, target);
-    log('insertBlobPageButton — inserted before target selector');
+function insertBlobPageButton(btn: HTMLElement, site: SiteAdapter): boolean {
+  for (const selector of site.blobButtonSelectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    if (!el) continue;
+
+    const isActionElement = el.tagName === 'A' || el.tagName === 'BUTTON';
+    if (isActionElement && el.parentElement) {
+      el.parentElement.insertBefore(btn, el);
+    } else {
+      el.appendChild(btn);
+    }
+    log('insertBlobPageButton — inserted via:', selector);
     return true;
   }
 
-  const fallbackSelectors = [
-    '[class*="BlobViewHeader-module"]',
-    '[class*="react-blob-header-actions"]',
-    '[class*="react-blob-header-edit-and-raw-actions"]',
-    '.file-actions',
-    '[data-testid="file-header"]',
-    '.react-blob-header',
-    '.Box-header .d-flex',
-    '.Box-header',
-  ];
-
-  for (const selector of fallbackSelectors) {
-    const el = document.querySelector(selector);
-    if (el) {
-      el.appendChild(btn);
-      log('insertBlobPageButton — inserted via fallback:', selector);
-      return true;
-    }
-  }
-
   const blobHeader = document.querySelector<HTMLElement>(
-    '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"]',
+    '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"], .file-title-flex-parent',
   );
   if (blobHeader) {
     blobHeader.appendChild(btn);
-    log('insertBlobPageButton — inserted via last-resort blobHeader');
+    log('insertBlobPageButton — inserted via last-resort fallback');
     return true;
   }
 
@@ -315,7 +298,15 @@ function insertBlobPageButton(btn: HTMLElement, handler: PreviewHandler): boolea
 // ── Preview orchestration ───────────────────────────────────
 
 function openPreview(fileUrl: string, filename: string): void {
-  const rawUrl = convertToRawUrl(fileUrl);
+  const site = getActiveSite();
+  if (!site) return;
+
+  const rawUrl = site.toRawUrl(fileUrl);
+  if (!rawUrl) {
+    log('openPreview — cannot resolve raw url for:', fileUrl);
+    return;
+  }
+
   const ext = getFileExtension(fileUrl);
   const handler = getHandler(ext);
   if (!handler) return;
@@ -323,7 +314,7 @@ function openPreview(fileUrl: string, filename: string): void {
   log('openPreview —', filename, 'handler:', ext);
 
   // Track current preview to protect against SPA URL blips
-  const blobPath = getBlobFilePath(fileUrl);
+  const blobPath = site.getBlobPath(fileUrl);
   if (blobPath) _currentPreviewBlobPath = blobPath;
 
   // New-tab handlers (PDF) manage themselves
@@ -333,7 +324,7 @@ function openPreview(fileUrl: string, filename: string): void {
   }
 
   // Container-based handlers (audio, video, etc.)
-  if (isTreePage(location.href)) {
+  if (site.isTreePage(location.href)) {
     showLoadingModal(filename, closeAll);
   } else {
     if (document.getElementById('gitpreview-inline')) {
