@@ -75,8 +75,10 @@ function loadSettings(): Promise<void> {
 
 function observePageChanges(): void {
   const scheduleAddButtons = debounce(addPreviewButtons, 200);
+  const scheduleBlobButton = debounce(handleBlobPage, 200);
   const observer = new MutationObserver(() => {
     scheduleAddButtons();
+    scheduleBlobButton();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 

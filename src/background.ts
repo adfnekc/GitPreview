@@ -1,10 +1,20 @@
-import { arrayBufferToBase64 } from './utils';
 import {
   GITLAB_INSTANCES_KEY,
   getInstanceOrigins,
   instanceScriptId,
   isInstanceScriptId,
 } from './lib/instances';
+
+// Kept local (not imported from utils) so the background bundle stays free of
+// modules shared with the content script, which must remain a classic script.
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i] ?? 0);
+  }
+  return btoa(binary);
+}
 
 const DEFAULT_SETTINGS = { keyboardShortcuts: true };
 
