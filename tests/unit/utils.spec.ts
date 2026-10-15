@@ -262,7 +262,6 @@ describe('isTreePage', () => {
   });
 });
 
-
 describe('convertToRawUrl', () => {
   test('converts blob URL to raw URL', () => {
     expect(convertToRawUrl('https://github.com/user/repo/blob/main/test.mp3')).toBe(
@@ -290,4 +289,3 @@ describe('convertToRawUrl', () => {
     );
   });
 });
-

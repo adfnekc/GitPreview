@@ -30,4 +30,5 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npx prettier --check "src/**/*.ts" "tests/**/*.ts"
+      - run: npm run typecheck
+      - run: npm run lint

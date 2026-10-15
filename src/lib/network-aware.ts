@@ -1,8 +1,17 @@
 import { escapeHTML, formatFileSize } from '../utils';
 
+interface NetworkInformationLike {
+  type?: string;
+  effectiveType?: string;
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkInformationLike;
+}
+
 export class NetworkAware {
   static isExpensiveConnection(): boolean {
-    const conn = (navigator as any).connection;
+    const conn = (navigator as NavigatorWithConnection).connection;
     if (!conn) return false;
 
     if (conn.type === 'cellular') return true;

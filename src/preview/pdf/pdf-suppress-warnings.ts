@@ -25,10 +25,10 @@ const FILTER_PATTERNS = [
   }
 
   // Suppress console methods matching known harmless PDF.js patterns
-  const patched: Array<keyof typeof console> = ['debug', 'log', 'warn', 'error'];
+  const patched: Array<'debug' | 'log' | 'warn' | 'error'> = ['debug', 'log', 'warn', 'error'];
   patched.forEach((method) => {
-    const orig = (console[method] as Function).bind(console);
-    (console[method] as unknown as Function) = (...args: unknown[]) => {
+    const orig = console[method].bind(console);
+    console[method] = (...args: unknown[]): void => {
       if (shouldSuppress(args)) return;
       orig(...args);
     };

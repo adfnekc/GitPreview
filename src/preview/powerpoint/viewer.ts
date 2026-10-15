@@ -33,10 +33,7 @@ export interface PptxViewer {
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 5;
 
-export function createPptxViewer(
-  wrapper: HTMLElement,
-  options: PptxViewerOptions,
-): PptxViewer {
+export function createPptxViewer(wrapper: HTMLElement, options: PptxViewerOptions): PptxViewer {
   const { stage, viewport } = options;
   const previewer = init(wrapper, {
     renderer: 'canvas',

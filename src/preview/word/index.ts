@@ -1,6 +1,7 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize, arrayBufferToBase64 } from '../../utils';
 import { fetchBinary } from '../../lib/range-fetcher';
+import { debug } from '../../lib/logger';
 import { runContainerPreview } from '../ui';
 import mammoth from 'mammoth';
 
@@ -48,7 +49,7 @@ export async function openWordPreview(
       </div>`;
 
     if (result.messages.length > 0) {
-      console.info('GitPreview Word conversion messages:', result.messages);
+      debug('Word conversion messages:', result.messages);
     }
   });
 }

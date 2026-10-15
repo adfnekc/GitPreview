@@ -91,14 +91,16 @@ interface FetchBinaryResponse {
         bytes[i] = binary.charCodeAt(i);
       }
 
-      const app = (window as any).PDFViewerApplication as
-        | {
+      const app = (
+        window as unknown as {
+          PDFViewerApplication?: {
             initializedPromise?: Promise<void>;
             url?: string;
             _downloadUrl?: string;
             open: (args: { data: Uint8Array }) => Promise<void>;
-          }
-        | undefined;
+          };
+        }
+      ).PDFViewerApplication;
       if (!app) throw new Error('PDFViewerApplication not available');
 
       // Remove loading overlay

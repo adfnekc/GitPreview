@@ -158,7 +158,9 @@ export async function openPowerPointPreview(
     // ── Download ────────────────────────────────────
     container
       .querySelector<HTMLElement>('.gitpreview-ppt-btn-download')
-      ?.addEventListener('click', () => downloadBuffer(arrayBuffer, filename, getMimeType(filename)));
+      ?.addEventListener('click', () =>
+        downloadBuffer(arrayBuffer, filename, getMimeType(filename)),
+      );
 
     // ── Keyboard navigation ─────────────────────────
     boundKeydown = (event: KeyboardEvent) => {
