@@ -1,15 +1,4 @@
-const DEFAULT_SETTINGS = {
-  autoPreview: true,
-  previewMode: 'modal',
-  keyboardShortcuts: true,
-  enabledFileTypes: {
-    audio: true,
-    image: true,
-    font: true,
-    html: true,
-    video: true,
-  },
-};
+const DEFAULT_SETTINGS = { keyboardShortcuts: true };
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -19,16 +8,6 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
-    case 'getSettings':
-      chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
-        sendResponse(settings);
-      });
-      return true;
-    case 'updateSettings':
-      chrome.storage.sync.set(request.settings, () => {
-        sendResponse({ success: true });
-      });
-      return true;
     case 'fetchAudio':
       fetchAudio(request.url, sendResponse);
       return true;

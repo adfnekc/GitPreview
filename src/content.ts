@@ -46,11 +46,7 @@ registerHandler(wordHandler);
 registerHandler(excelHandler);
 registerHandler(powerPointHandler);
 
-let settings = {
-  autoPreview: true,
-  previewMode: 'modal' as 'modal' | 'inline',
-  keyboardShortcuts: true,
-};
+let settings = { keyboardShortcuts: true };
 
 let isInitialized = false;
 let _currentPreviewBlobPath: string | null = null;
@@ -88,13 +84,10 @@ function init(): void {
 function loadSettings(): Promise<void> {
   return new Promise((resolve) => {
     if (typeof chrome !== 'undefined' && chrome.storage?.sync) {
-      chrome.storage.sync.get(
-        { autoPreview: true, previewMode: 'modal', keyboardShortcuts: true },
-        (result) => {
-          settings = result as typeof settings;
-          resolve();
-        },
-      );
+      chrome.storage.sync.get({ keyboardShortcuts: true }, (result) => {
+        settings = result as typeof settings;
+        resolve();
+      });
     } else {
       resolve();
     }

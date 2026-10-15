@@ -6,9 +6,7 @@ import {
   formatTime,
   isBlobPage,
   isTreePage,
-  extractFilenameFromUrl,
   convertToRawUrl,
-  clamp,
 } from '../../src/utils';
 import { registerHandler, isSupported } from '../../src/preview/registry';
 
@@ -264,35 +262,6 @@ describe('isTreePage', () => {
   });
 });
 
-describe('extractFilenameFromUrl', () => {
-  test('extracts filename from URL', () => {
-    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/test.mp3')).toBe(
-      'test.mp3',
-    );
-    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/audio.wav')).toBe(
-      'audio.wav',
-    );
-    expect(extractFilenameFromUrl('/user/repo/blob/main/music.ogg')).toBe('music.ogg');
-  });
-
-  test('handles URLs with query parameters', () => {
-    expect(extractFilenameFromUrl('https://github.com/user/repo/blob/main/test.mp3?raw=true')).toBe(
-      'test.mp3',
-    );
-    expect(extractFilenameFromUrl('/user/repo/blob/main/audio.wav?foo=bar')).toBe('audio.wav');
-  });
-
-  test('handles simple paths', () => {
-    expect(extractFilenameFromUrl('test.mp3')).toBe('test.mp3');
-    expect(extractFilenameFromUrl('/audio.wav')).toBe('audio.wav');
-  });
-
-  test('handles null/undefined/empty', () => {
-    expect(extractFilenameFromUrl(null)).toBe('');
-    expect(extractFilenameFromUrl(undefined)).toBe('');
-    expect(extractFilenameFromUrl('')).toBe('');
-  });
-});
 
 describe('convertToRawUrl', () => {
   test('converts blob URL to raw URL', () => {
@@ -322,34 +291,3 @@ describe('convertToRawUrl', () => {
   });
 });
 
-describe('clamp', () => {
-  test('clamps value within range', () => {
-    expect(clamp(5, 0, 10)).toBe(5);
-    expect(clamp(0, 0, 10)).toBe(0);
-    expect(clamp(10, 0, 10)).toBe(10);
-  });
-
-  test('clamps values below minimum', () => {
-    expect(clamp(-5, 0, 10)).toBe(0);
-    expect(clamp(0, 1, 10)).toBe(1);
-    expect(clamp(-100, -50, 50)).toBe(-50);
-  });
-
-  test('clamps values above maximum', () => {
-    expect(clamp(15, 0, 10)).toBe(10);
-    expect(clamp(100, 0, 50)).toBe(50);
-    expect(clamp(50, -50, 0)).toBe(0);
-  });
-
-  test('handles negative ranges', () => {
-    expect(clamp(-25, -50, 50)).toBe(-25);
-    expect(clamp(-100, -50, 50)).toBe(-50);
-    expect(clamp(100, -50, 50)).toBe(50);
-  });
-
-  test('handles decimal values', () => {
-    expect(clamp(5.5, 0, 10)).toBe(5.5);
-    expect(clamp(10.1, 0, 10)).toBe(10);
-    expect(clamp(-0.1, 0, 10)).toBe(0);
-  });
-});

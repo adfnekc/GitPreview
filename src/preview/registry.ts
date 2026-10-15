@@ -25,8 +25,3 @@ export function closeAllHandlers(): void {
     handler.close?.();
   }
 }
-
-/** Get all registered handlers (for iteration). */
-export function getAllHandlers(): PreviewHandler[] {
-  return Array.from(handlerSet);
-}

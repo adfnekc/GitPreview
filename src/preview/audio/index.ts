@@ -4,10 +4,6 @@ import { renderErrorContent } from '../ui';
 
 export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
 
-export function isAudioExtension(ext: string): boolean {
-  return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
-}
-
 function getAudioMimeType(filename: string): string {
   const ext = filename.split('.').pop()!.toLowerCase();
   const mimeTypes: Record<string, string> = {
@@ -373,10 +369,6 @@ export class GitPreviewAudioPlayer {
     }
   }
 
-  updateDuration(): void {
-    this.elements.totalTime!.textContent = this.formatTime(this.getDuration());
-  }
-
   onEnded(): void {
     if (!this.isPlaying) return;
     this.isPlaying = false;
@@ -407,10 +399,6 @@ export class GitPreviewAudioPlayer {
     this.pauseTime = newTime;
     this.updateProgress();
     if (wasPlaying) this.play();
-  }
-
-  onError(err: unknown): void {
-    console.error('Audio error:', err);
   }
 
   toggleMenu(): void {
@@ -553,10 +541,6 @@ export function closeAudioPreview(): void {
     currentPlayer.destroy();
     currentPlayer = null;
   }
-}
-
-export function getCurrentPlayer(): GitPreviewAudioPlayer | null {
-  return currentPlayer;
 }
 
 export function togglePlay(): void {

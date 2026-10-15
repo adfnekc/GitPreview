@@ -38,12 +38,6 @@ export function isTreePage(url: string | null | undefined): boolean {
   return !!(url && url.includes('/tree/'));
 }
 
-export function extractFilenameFromUrl(url: string | null | undefined): string {
-  if (!url) return '';
-  const path = url.split('?')[0];
-  return path.split('/').pop() || '';
-}
-
 export function convertToRawUrl(githubUrl: string): string {
   if (!githubUrl) return '';
   let url = githubUrl;
@@ -55,10 +49,6 @@ export function convertToRawUrl(githubUrl: string): string {
     url = url.replace('/blob/', '/');
   }
   return url;
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {

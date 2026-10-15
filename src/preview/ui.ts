@@ -211,25 +211,6 @@ export function showLoadingModal(filename: string, onClose?: () => void): void {
   overlay.focus();
 }
 
-export function showError(filename: string, message: string): void {
-  removeExistingPlayer();
-  const container = createInlineContainer();
-  const content = container.querySelector<HTMLElement>('#gitpreview-inline-content')!;
-  content.innerHTML = renderErrorContent(message);
-  insertInlineContainer(container);
-}
-
-export function showErrorModal(filename: string, message: string, onClose?: () => void): void {
-  removeExistingModal();
-  const overlay = createModalContainer(filename, () => {
-    onClose?.();
-  });
-  const content = overlay.querySelector<HTMLElement>('#gitpreview-modal-content')!;
-  content.innerHTML = renderErrorContent(message);
-  document.body.appendChild(overlay);
-  overlay.focus();
-}
-
 export function removeExistingPlayer(): void {
   document.getElementById('gitpreview-inline')?.remove();
 }
