@@ -8,6 +8,8 @@ cd gitpreview
 npm install
 npm run dev        # Watch-mode build
 npm test           # Run unit tests
+npm run typecheck  # Type-check (tsc --noEmit)
+npm run lint       # Prettier + ESLint
 ```
 
 Load unpacked from `dist/` in Chrome Extensions page.
@@ -78,17 +80,23 @@ Done. The registry handles lifecycle automatically.
 
 ```
 src/
-  content.ts          ← Entry point. Registers handlers, manages page observation.
+  content.ts          ← Entry point. Registers handlers and starts the controller.
+  controller.ts       ← Page observation, button injection, preview orchestration.
   utils.ts            ← Pure utility functions (no handler-specific code).
   lib/
     range-fetcher.ts  ← Binary fetch + Range-request streaming.
     network-aware.ts  ← Cellular detection + large-file warning dialog.
+    debounce.ts       ← Generic debounce.
+    download.ts       ← Blob download helper.
+    instances.ts      ← Self-hosted instance storage helpers.
+    logger.ts         ← Dev-gated logging.
+    mime.ts           ← Filename → MIME map.
   preview/
     handler.ts        ← PreviewHandler interface.
     registry.ts       ← Handler registration + lifecycle dispatch.
     ui.ts             ← DOM helpers (buttons, containers, loading/error states).
     preview.css       ← All preview styles.
-    audio/            ← Audio player.
+    audio/            ← Audio player (player + waveform).
     video/            ← StreamVideoPlayer (MediaSource).
     pdf/              ← PDF.js viewer (new tab).
     font/             ← Font face preview.
@@ -96,6 +104,7 @@ src/
     excel/            ← XLSX → HTML table (SheetJS).
     powerpoint/       ← PPTX slide viewer (pptx-preview).
   sites/              ← Site adapters (GitHub, GitLab) + detection.
+  options/            ← Self-hosted instance settings page.
 ```
 
 ## Adding a new site
@@ -109,6 +118,8 @@ The adapter owns page detection, blob→raw URL conversion, DOM selectors, and b
 
 ```bash
 npm test              # Unit tests (vitest)
+npm run typecheck     # TypeScript
+npm run lint          # Prettier + ESLint
 npm run test:e2e:smoke  # Playwright smoke tests
 ```
 
