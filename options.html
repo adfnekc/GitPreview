@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitPreview Settings</title>
+    <link rel="stylesheet" href="/src/options/options.css" />
+  </head>
+  <body>
+    <main class="options-page">
+      <h1>GitPreview — Self-hosted GitLab</h1>
+      <p class="options-desc">
+        Add your GitLab instance (for example <code>https://gitlab.example.com</code>) to enable
+        file previews there. You will be asked to grant access to that site.
+      </p>
+
+      <div class="options-form">
+        <input
+          id="instance-input"
+          type="text"
+          placeholder="https://gitlab.example.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="add-btn" type="button">Add instance</button>
+      </div>
+
+      <p id="message" class="options-message"></p>
+      <ul id="instance-list" class="options-list"></ul>
+    </main>
+    <script type="module" src="/src/options/options.ts"></script>
+  </body>
+</html>

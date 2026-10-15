@@ -1,22 +1,24 @@
 {
   "manifest_version": 3,
-  "name": "GitPreview - GitHub File Previewer",
-  "version": "1.0.5",
-  "description": "Preview various file types directly on GitHub without leaving the page.",
+  "name": "GitPreview - GitHub & GitLab File Previewer",
+  "version": "1.1.0",
+  "description": "Preview various file types directly on GitHub and GitLab without leaving the page.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png"
   },
-  "permissions": [
-    "storage",
-    "activeTab",
-    "declarativeNetRequest"
-  ],
+  "permissions": ["storage", "activeTab", "declarativeNetRequest", "scripting"],
   "host_permissions": [
     "https://github.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://raw.githubusercontent.com/*",
+    "https://gitlab.com/*"
   ],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "declarative_net_request": {
     "rule_resources": [
       {
@@ -28,7 +30,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
+      "matches": ["https://github.com/*", "https://gitlab.com/*"],
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"

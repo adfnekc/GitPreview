@@ -13,6 +13,7 @@ export default defineConfig({
         background: resolve(__dirname, 'src/background.ts'),
         'pdf-viewer-loader': resolve(__dirname, 'src/preview/pdf/pdf-viewer-loader.ts'),
         'pdf-suppress-warnings': resolve(__dirname, 'src/preview/pdf/pdf-suppress-warnings.ts'),
+        options: resolve(__dirname, 'options.html'),
       },
       output: {
         entryFileNames: '[name].js',
