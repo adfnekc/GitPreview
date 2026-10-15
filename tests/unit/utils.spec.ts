@@ -15,7 +15,6 @@ import { registerHandler, isSupported } from '../../src/preview/registry';
 beforeAll(() => {
   registerHandler({
     extensions: ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'],
-    getBlobButtonSelector: () => '',
     openPreview: () => {},
   });
 });

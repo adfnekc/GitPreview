@@ -1,4 +1,4 @@
-import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { type PreviewHandler } from '../handler';
 import { escapeHTML, base64ToArrayBuffer } from '../../utils';
 import { renderErrorContent } from '../ui';
 
@@ -581,7 +581,6 @@ export function getVolume(): number {
 
 export const audioHandler: PreviewHandler = {
   extensions: AUDIO_EXTENSIONS,
-  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
     if (!container) return;
     openAudioPreview(rawUrl, _filename, container).catch((err) => {

@@ -11,13 +11,6 @@ export interface PreviewHandler {
   extensions: string[];
 
   /**
-   * CSS selector for the button element before which to insert the preview
-   * button on blob pages. Override if your handler needs a different position.
-   * Defaults to DEFAULT_BLOB_BUTTON_SELECTOR.
-   */
-  getBlobButtonSelector(): string;
-
-  /**
    * If true, openPreview opens content in a new tab (e.g. PDF).
    * When false, content.ts creates an inline/modal container and passes
    * it to openPreview.
@@ -36,7 +29,3 @@ export interface PreviewHandler {
    */
   close?(): void;
 }
-
-/** Default blob button selector used by most handlers. */
-export const DEFAULT_BLOB_BUTTON_SELECTOR =
-  'a[data-testid="raw-button"], a[href*="/raw/"], a#raw-url';

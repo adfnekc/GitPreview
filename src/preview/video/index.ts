@@ -1,4 +1,4 @@
-import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { type PreviewHandler } from '../handler';
 import { escapeHTML } from '../../utils';
 
 export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
@@ -215,7 +215,6 @@ export function closeVideoPreview(): void {
 
 export const videoHandler: PreviewHandler = {
   extensions: VIDEO_EXTENSIONS,
-  getBlobButtonSelector: () => DEFAULT_BLOB_BUTTON_SELECTOR,
   openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
     if (!container) return;
     openVideoPreview(rawUrl, _filename, container);

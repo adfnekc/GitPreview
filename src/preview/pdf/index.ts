@@ -1,4 +1,4 @@
-import { type PreviewHandler, DEFAULT_BLOB_BUTTON_SELECTOR } from '../handler';
+import { type PreviewHandler } from '../handler';
 
 /**
  * PDF preview powered by PDF.js (https://mozilla.github.io/pdf.js/)
@@ -41,9 +41,6 @@ export function openPdfPreview(rawUrl: string, filename: string): void {
 export const pdfHandler: PreviewHandler = {
   extensions: ['pdf'],
   opensInNewTab: true,
-  getBlobButtonSelector() {
-    return 'button[data-testid="download-raw-button"]';
-  },
   openPreview(rawUrl: string, filename: string, _container?: HTMLElement) {
     openPdfPreview(rawUrl, filename);
   },
