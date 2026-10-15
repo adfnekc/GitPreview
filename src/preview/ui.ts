@@ -1,4 +1,5 @@
 import { escapeHTML, isBlobPage } from '../utils';
+import { getActiveSite } from '../sites/index';
 
 const OPEN_EYE_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>';
@@ -80,27 +81,19 @@ export function createInlineContainer(): HTMLElement {
 }
 
 export function insertInlineContainer(container: HTMLElement): void {
-  const blobTargets = [
-    '[class*="BlobViewContent-module__blobContentWrapper"]',
-    '[class*="BlobContent-module__blobContentSection"]',
-    '[data-testid="blob-content"]',
-    '.blob-wrapper',
-    '.Box-body',
-    '.react-code-view',
-    '[data-testid="file-content"]',
-  ];
+  const site = getActiveSite();
 
-  for (const selector of blobTargets) {
-    const target = document.querySelector<HTMLElement>(selector);
-    if (target?.parentElement) {
-      target.parentElement.insertBefore(container, target);
-      target.classList.add('gitpreview-blob-target');
-      target.style.display = 'none';
-      return;
+  if (site) {
+    for (const selector of site.inlineInsertSelectors) {
+      const target = document.querySelector<HTMLElement>(selector);
+      if (target?.parentElement) {
+        target.parentElement.insertBefore(container, target);
+        target.classList.add('gitpreview-blob-target');
+        target.style.display = 'none';
+        return;
+      }
     }
   }
-
-  console.log('[GitPreview] insertInlineContainer — no blob target, trying tree targets');
 
   const treeTargets = [
     '[class*="react-directory"]',
@@ -120,19 +113,13 @@ export function insertInlineContainer(container: HTMLElement): void {
     }
   }
 
-  console.log('[GitPreview] insertInlineContainer — no tree target either, using body fallback');
-
-  const repoContent =
-    document.querySelector('.repository-content') ||
-    document.querySelector('[data-testid="repo-content"]') ||
-    document.querySelector('[id="repo-content-pjax-container"]') ||
-    document.querySelector('[class*="PageLayout-PageLayoutContent"]') ||
-    document.querySelector('main') ||
-    document.querySelector('#js-repo-pjax-container');
-
-  if (repoContent) {
-    repoContent.appendChild(container);
-    return;
+  const repoSelectors = [...(site?.repoContentSelectors ?? []), 'main', 'body'];
+  for (const selector of repoSelectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    if (el) {
+      el.appendChild(container);
+      return;
+    }
   }
 
   document.body.appendChild(container);
