@@ -13,7 +13,6 @@ import { getFileExtension } from './utils';
 import { getActiveSite } from './sites/index';
 import { debug } from './lib/logger';
 import { debounce } from './lib/debounce';
-import type { SiteAdapter } from './sites/types';
 import { audioHandler } from './preview/audio/index';
 import { pdfHandler } from './preview/pdf/index';
 import { videoHandler } from './preview/video/index';
@@ -30,6 +29,7 @@ import {
   showLoading,
   showLoadingModal,
   getCurrentPreviewContent,
+  insertBlobPageButton,
 } from './preview/ui';
 import { togglePlay, rewind, forward, setVolume, getVolume } from './preview/audio/index';
 import { bindKeyboardShortcuts } from './preview/keyboard';
@@ -247,33 +247,6 @@ function handleBlobPage(): void {
   if (!handler.opensInNewTab) {
     openPreview(url, filename);
   }
-}
-
-function insertBlobPageButton(btn: HTMLElement, site: SiteAdapter): boolean {
-  for (const selector of site.blobButtonSelectors) {
-    const el = document.querySelector<HTMLElement>(selector);
-    if (!el) continue;
-
-    const isActionElement = el.tagName === 'A' || el.tagName === 'BUTTON';
-    if (isActionElement && el.parentElement) {
-      el.parentElement.insertBefore(btn, el);
-    } else {
-      el.appendChild(btn);
-    }
-    debug('insertBlobPageButton — inserted via:', selector);
-    return true;
-  }
-
-  const blobHeader = document.querySelector<HTMLElement>(
-    '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"], .file-title-flex-parent',
-  );
-  if (blobHeader) {
-    blobHeader.appendChild(btn);
-    debug('insertBlobPageButton — inserted via last-resort fallback');
-    return true;
-  }
-
-  return false;
 }
 
 // ── Preview orchestration ───────────────────────────────────

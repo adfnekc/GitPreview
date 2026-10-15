@@ -1,5 +1,6 @@
 import { escapeHTML, isBlobPage } from '../utils';
 import { getActiveSite } from '../sites/index';
+import type { SiteAdapter } from '../sites/types';
 
 const OPEN_EYE_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>';
@@ -224,4 +225,54 @@ export function getCurrentPreviewContent(): HTMLElement | null {
     document.getElementById('gitpreview-modal-content') ||
     document.getElementById('gitpreview-inline-content')
   );
+}
+
+// ── Handler support ─────────────────────────────────────────
+
+export function renderLoading(filename: string): string {
+  return `
+    <div class="gitpreview-loading">
+      <div class="gitpreview-spinner"></div>
+      <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
+    </div>`;
+}
+
+/** Show a loading state, run `task`, and render an error if it throws. */
+export async function runContainerPreview(
+  container: HTMLElement,
+  filename: string,
+  task: () => Promise<void>,
+): Promise<void> {
+  container.innerHTML = renderLoading(filename);
+  try {
+    await task();
+  } catch (err) {
+    console.error('GitPreview preview error:', err);
+    container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load file');
+  }
+}
+
+export function insertBlobPageButton(btn: HTMLElement, site: SiteAdapter): boolean {
+  for (const selector of site.blobButtonSelectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    if (!el) continue;
+
+    const isActionElement = el.tagName === 'A' || el.tagName === 'BUTTON';
+    if (isActionElement && el.parentElement) {
+      el.parentElement.insertBefore(btn, el);
+    } else {
+      el.appendChild(btn);
+    }
+    return true;
+  }
+
+  const blobHeader = document.querySelector<HTMLElement>(
+    '[class*="blob-header"], [class*="file-header"], [class*="BlobViewHeader"], .file-title-flex-parent',
+  );
+  if (blobHeader) {
+    blobHeader.appendChild(btn);
+    return true;
+  }
+
+  return false;
 }

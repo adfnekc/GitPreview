@@ -1,6 +1,6 @@
-export {};
+import { GITLAB_INSTANCES_KEY, instanceScriptId } from '../lib/instances';
 
-const STORAGE_KEY = 'gitlabInstances';
+export {};
 
 const input = document.getElementById('instance-input') as HTMLInputElement;
 const addBtn = document.getElementById('add-btn') as HTMLButtonElement;
@@ -27,26 +27,16 @@ function normalizeOrigin(raw: string): string | null {
 
 function getInstances(): Promise<string[]> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get({ [STORAGE_KEY]: [] }, (result) => {
-      resolve((result[STORAGE_KEY] as string[]) ?? []);
+    chrome.storage.sync.get({ [GITLAB_INSTANCES_KEY]: [] }, (result) => {
+      resolve((result[GITLAB_INSTANCES_KEY] as string[]) ?? []);
     });
   });
 }
 
 function saveInstances(instances: string[]): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.sync.set({ [STORAGE_KEY]: instances }, () => resolve());
+    chrome.storage.sync.set({ [GITLAB_INSTANCES_KEY]: instances }, () => resolve());
   });
-}
-
-function scriptIdFor(origin: string): string {
-  let host = origin;
-  try {
-    host = new URL(origin).host;
-  } catch {
-    /* keep origin */
-  }
-  return `gitpreview-gitlab-${host.replace(/[^a-z0-9.-]/gi, '_')}`;
 }
 
 async function render(): Promise<void> {
@@ -111,7 +101,7 @@ async function removeInstance(origin: string): Promise<void> {
   await saveInstances(instances.filter((item) => item !== origin));
 
   try {
-    await chrome.scripting.unregisterContentScripts({ ids: [scriptIdFor(origin)] });
+    await chrome.scripting.unregisterContentScripts({ ids: [instanceScriptId(origin)] });
   } catch {
     /* script was not registered */
   }

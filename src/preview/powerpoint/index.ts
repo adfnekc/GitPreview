@@ -1,6 +1,8 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize } from '../../utils';
 import { fetchBinary } from '../../lib/range-fetcher';
+import { getMimeType } from '../../lib/mime';
+import { downloadBuffer } from '../../lib/download';
 import { renderErrorContent } from '../ui';
 import { init } from 'pptx-preview';
 
@@ -350,17 +352,7 @@ export async function openPowerPointPreview(
     // Download
     const downloadBtn = container.querySelector<HTMLElement>('.gitpreview-ppt-btn-download');
     downloadBtn?.addEventListener('click', () => {
-      const blob = new Blob([arrayBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      });
-      const dlUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = dlUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(dlUrl);
+      downloadBuffer(arrayBuffer, filename, getMimeType(filename));
     });
 
     // Keyboard navigation

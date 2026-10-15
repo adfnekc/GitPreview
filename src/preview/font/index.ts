@@ -3,7 +3,7 @@ import { escapeHTML, formatFileSize } from '../../utils';
 
 export const FONT_EXTENSIONS = ['ttf', 'otf', 'woff', 'woff2'];
 import { fetchBinary } from '../../lib/range-fetcher';
-import { renderErrorContent } from '../ui';
+import { runContainerPreview } from '../ui';
 
 export async function openFontPreview(
   url: string,
@@ -12,13 +12,7 @@ export async function openFontPreview(
 ): Promise<void> {
   const ext = filename.split('.').pop()?.toLowerCase() || 'ttf';
 
-  container.innerHTML = `
-    <div class="gitpreview-loading">
-      <div class="gitpreview-spinner"></div>
-      <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
-    </div>`;
-
-  try {
+  await runContainerPreview(container, filename, async () => {
     const arrayBuffer = await fetchBinary(url);
 
     const fontFamily = `__gp_font_${Date.now()}`;
@@ -110,10 +104,7 @@ export async function openFontPreview(
       };
       weightSlider.addEventListener('input', updateWeight);
     }
-  } catch (err) {
-    console.error('GitPreview font error:', err);
-    container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load font');
-  }
+  });
 }
 
 export function closeFontPreview(): void {

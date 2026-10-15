@@ -1,41 +1,11 @@
 import { type PreviewHandler } from '../handler';
-import { escapeHTML, base64ToArrayBuffer } from '../../utils';
-import { renderErrorContent } from '../ui';
+import { escapeHTML } from '../../utils';
+import { fetchBinary } from '../../lib/range-fetcher';
+import { getMimeType } from '../../lib/mime';
+import { downloadBuffer } from '../../lib/download';
+import { runContainerPreview } from '../ui';
 
 export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
-
-function getAudioMimeType(filename: string): string {
-  const ext = filename.split('.').pop()!.toLowerCase();
-  const mimeTypes: Record<string, string> = {
-    mp3: 'audio/mpeg',
-    wav: 'audio/wav',
-    ogg: 'audio/ogg',
-    m4a: 'audio/mp4',
-    flac: 'audio/flac',
-    aac: 'audio/aac',
-  };
-  return mimeTypes[ext] || 'audio/mpeg';
-}
-
-function fetchAudioFromBackground(url: string): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-      chrome.runtime.sendMessage({ action: 'fetchAudio', url }, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        if (response.success) {
-          resolve(base64ToArrayBuffer(response.data));
-        } else {
-          reject(new Error(response.error || 'Failed to fetch audio'));
-        }
-      });
-    } else {
-      reject(new Error('Chrome runtime not available'));
-    }
-  });
-}
 
 export class GitPreviewAudioPlayer {
   url: string;
@@ -415,16 +385,8 @@ export class GitPreviewAudioPlayer {
 
   download(): void {
     this.closeMenu();
-    const mimeType = getAudioMimeType(this.filename);
-    const blob = new Blob([this.arrayBuffer], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = this.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!this.arrayBuffer) return;
+    downloadBuffer(this.arrayBuffer, this.filename, getMimeType(this.filename));
   }
 
   formatTime(seconds: number): string {
@@ -518,19 +480,9 @@ export function openAudioPreview(
     currentPlayer.destroy();
   }
 
-  container.innerHTML = `
-    <div class="gitpreview-loading">
-      <div class="gitpreview-spinner"></div>
-      <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
-    </div>
-  `;
-
-  return fetchAudioFromBackground(url).then((arrayBuffer) => {
-    currentPlayer = new GitPreviewAudioPlayer({
-      arrayBuffer,
-      url,
-      filename,
-    });
+  return runContainerPreview(container, filename, async () => {
+    const arrayBuffer = await fetchBinary(url);
+    currentPlayer = new GitPreviewAudioPlayer({ arrayBuffer, url, filename });
     container.innerHTML = '';
     container.appendChild(currentPlayer.render());
   });
@@ -567,10 +519,7 @@ export const audioHandler: PreviewHandler = {
   extensions: AUDIO_EXTENSIONS,
   openPreview(rawUrl: string, _filename: string, container?: HTMLElement) {
     if (!container) return;
-    openAudioPreview(rawUrl, _filename, container).catch((err) => {
-      console.error('GitPreview audio error:', err);
-      container.innerHTML = renderErrorContent((err as Error).message || 'Failed to load audio');
-    });
+    void openAudioPreview(rawUrl, _filename, container);
   },
   close: closeAudioPreview,
 };

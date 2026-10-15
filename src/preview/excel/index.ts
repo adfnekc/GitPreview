@@ -1,7 +1,7 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize } from '../../utils';
 import { fetchBinary } from '../../lib/range-fetcher';
-import { renderErrorContent } from '../ui';
+import { runContainerPreview } from '../ui';
 import * as XLSX from 'xlsx';
 
 export async function openExcelPreview(
@@ -9,13 +9,7 @@ export async function openExcelPreview(
   filename: string,
   container: HTMLElement,
 ): Promise<void> {
-  container.innerHTML = `
-    <div class="gitpreview-loading">
-      <div class="gitpreview-spinner"></div>
-      <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
-    </div>`;
-
-  try {
+  await runContainerPreview(container, filename, async () => {
     const arrayBuffer = await fetchBinary(url);
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const sheetNames = workbook.SheetNames;
@@ -62,12 +56,7 @@ export async function openExcelPreview(
         sheet?.classList.add('gitpreview-excel-sheet-active');
       });
     });
-  } catch (err) {
-    console.error('GitPreview excel error:', err);
-    container.innerHTML = renderErrorContent(
-      (err as Error).message || 'Failed to load spreadsheet',
-    );
-  }
+  });
 }
 
 export function closeExcelPreview(): void {

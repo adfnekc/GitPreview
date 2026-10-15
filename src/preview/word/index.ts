@@ -1,7 +1,7 @@
 import { type PreviewHandler } from '../handler';
 import { escapeHTML, formatFileSize, arrayBufferToBase64 } from '../../utils';
 import { fetchBinary } from '../../lib/range-fetcher';
-import { renderErrorContent } from '../ui';
+import { runContainerPreview } from '../ui';
 import mammoth from 'mammoth';
 
 export async function openWordPreview(
@@ -9,13 +9,7 @@ export async function openWordPreview(
   filename: string,
   container: HTMLElement,
 ): Promise<void> {
-  container.innerHTML = `
-    <div class="gitpreview-loading">
-      <div class="gitpreview-spinner"></div>
-      <div class="gitpreview-loading-text">Loading ${escapeHTML(filename)}...</div>
-    </div>`;
-
-  try {
+  await runContainerPreview(container, filename, async () => {
     const arrayBuffer = await fetchBinary(url);
     const result = await mammoth.convertToHtml(
       { arrayBuffer },
@@ -56,12 +50,7 @@ export async function openWordPreview(
     if (result.messages.length > 0) {
       console.info('GitPreview Word conversion messages:', result.messages);
     }
-  } catch (err) {
-    console.error('GitPreview word error:', err);
-    container.innerHTML = renderErrorContent(
-      (err as Error).message || 'Failed to load Word document',
-    );
-  }
+  });
 }
 
 export function closeWordPreview(): void {
