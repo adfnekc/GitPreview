@@ -19,6 +19,7 @@ export async function openExcelPreview(
     let sheetsHtml = '';
     sheetNames.forEach((name, i) => {
       const sheet = workbook.Sheets[name];
+      if (!sheet) return;
       const html = XLSX.utils.sheet_to_html(sheet, { id: `gitpreview-excel-sheet-${i}` });
       tabsHtml += `<button class="gitpreview-excel-tab${i === 0 ? ' gitpreview-excel-tab-active' : ''}" data-sheet-index="${i}">${escapeHTML(name)}</button>`;
       sheetsHtml += `<div class="gitpreview-excel-sheet${i === 0 ? ' gitpreview-excel-sheet-active' : ''}" data-sheet-index="${i}">${html}</div>`;

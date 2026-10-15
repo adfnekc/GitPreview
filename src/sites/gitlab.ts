@@ -42,7 +42,7 @@ export const gitlabAdapter: SiteAdapter = {
     const parsed = parse(url);
     if (!parsed) return null;
     const match = parsed.pathname.match(BLOB_PATH_RE);
-    return match ? match[1] : null;
+    return match?.[1] ?? null;
   },
 
   fileLinkSelector: 'a[data-testid="file-row"]',
@@ -56,7 +56,7 @@ export const gitlabAdapter: SiteAdapter = {
     const nameAttr = link.querySelector('[data-qa-file-name]')?.getAttribute('data-qa-file-name');
     if (nameAttr) return nameAttr;
     const href = link.getAttribute('href') || '';
-    const path = href.split('?')[0].split('#')[0];
+    const path = href.split('?')[0]?.split('#')[0] ?? '';
     return decodeURIComponent(path.split('/').pop() || '');
   },
 

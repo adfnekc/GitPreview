@@ -16,7 +16,7 @@ export const githubAdapter: SiteAdapter = {
 
   getBlobPath(url) {
     const match = url.match(BLOB_PATH_RE);
-    return match ? match[1] : null;
+    return match?.[1] ?? null;
   },
 
   fileLinkSelector: 'a[href*="/blob/"]',

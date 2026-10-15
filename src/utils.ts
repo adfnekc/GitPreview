@@ -1,5 +1,5 @@
 export function getFileExtension(path: string): string {
-  const filename = path.split('/').pop()!.split('?')[0];
+  const filename = path.split('/').pop()?.split('?')[0] ?? '';
   const lastDot = filename.lastIndexOf('.');
   if (lastDot === -1) return '';
   return filename.slice(lastDot + 1).toLowerCase();
@@ -64,7 +64,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
   const bytes = new Uint8Array(buffer);
   for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+    binary += String.fromCharCode(bytes[i] ?? 0);
   }
   return btoa(binary);
 }

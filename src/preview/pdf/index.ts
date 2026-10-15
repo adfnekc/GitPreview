@@ -13,7 +13,7 @@ import { type PreviewHandler } from '../handler';
 function getRealFilename(fallback: string): string {
   if (location.href.includes('/blob/')) {
     const match = document.title.match(/^(.+?)\s·\s/);
-    if (match) return match[1].trim();
+    if (match?.[1]) return match[1].trim();
   }
   return decodeURIComponent(fallback);
 }

@@ -204,7 +204,7 @@ function handleBlobPage(): void {
     return;
   }
 
-  const filename = decodeURIComponent(url.split('/').pop()!.split('?')[0]);
+  const filename = decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '');
   debug('handleBlobPage — setting up for:', filename);
 
   const btn = createPreviewButton(url, filename, false, openPreview);

@@ -8,6 +8,7 @@
     "dev": "vite build --watch",
     "package": "npm run build && VERSION=$(node -p \"require('./package.json').version\") && CHROME=$(find ~/.cache/ms-playwright -name 'chrome' -type f 2>/dev/null | head -1) && mkdir -p release && if [ -f keys/gitpreview.pem ]; then \"$CHROME\" --pack-extension=$PWD/dist --pack-extension-key=$PWD/keys/gitpreview.pem --no-message-box 2>/dev/null; else \"$CHROME\" --pack-extension=$PWD/dist --no-message-box 2>/dev/null && mv dist.pem keys/gitpreview.pem; fi && mv dist.crx \"release/gitpreview-v$VERSION.crx\" && echo \"Created release/gitpreview-v$VERSION.crx\"",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "node tests/e2e/auth-setup.js && npx playwright test --project=github-smoke",
     "lint": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
