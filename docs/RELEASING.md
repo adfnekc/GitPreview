@@ -46,14 +46,16 @@ Firefox AMO (`web-ext sign`):
 | `AMO_API_KEY` | AMO → Tools → Manage API Keys (JWT issuer) |
 | `AMO_API_SECRET` | AMO → Tools → Manage API Keys (JWT secret) |
 
-Microsoft Edge Add-ons (`scripts/publish-edge.mjs`):
+Microsoft Edge Add-ons (`scripts/publish-edge.mjs`, Publish API v1.1 / API key):
 
 | Secret | Where to get it |
 | --- | --- |
-| `EDGE_PRODUCT_ID` | Partner Center → extension product id |
-| `EDGE_CLIENT_ID` | Azure AD app registration |
-| `EDGE_CLIENT_SECRET` | Azure AD app registration |
-| `EDGE_ACCESS_TOKEN_URL` | Azure AD token endpoint |
+| `EDGE_PRODUCT_ID` | Partner Center → extension → **Extension identity** → Product ID (GUID) |
+| `EDGE_CLIENT_ID` | Partner Center → **Publish API** → Client ID |
+| `EDGE_API_KEY` | Partner Center → **Publish API** → **+ New API key** (shown once, expires ~72 days) |
+
+Note: Edge uses the current API-key model. The older Azure AD model
+(`EDGE_CLIENT_SECRET` / `EDGE_ACCESS_TOKEN_URL`) is retired.
 
 ### Stores without an automated step
 

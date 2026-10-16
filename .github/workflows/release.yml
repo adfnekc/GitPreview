@@ -26,8 +26,7 @@ jobs:
       AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
       EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
       EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
-      EDGE_CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
-      EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,7 +86,6 @@ jobs:
         env:
           RELEASE_NOTES: GitPreview v${{ steps.ver.outputs.version }}
         run: |
-          npm i --no-save edge-addons-api@0.6
           node scripts/publish-edge.mjs "release/gitpreview-v${{ steps.ver.outputs.version }}-chrome.zip"
 
       # ── Opera ───────────────────────────────────────────────────────────
