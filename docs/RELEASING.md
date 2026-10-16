@@ -57,6 +57,25 @@ Microsoft Edge Add-ons (`scripts/publish-edge.mjs`, Publish API v1.1 / API key):
 Note: Edge uses the current API-key model. The older Azure AD model
 (`EDGE_CLIENT_SECRET` / `EDGE_ACCESS_TOKEN_URL`) is retired.
 
+#### If Edge enrollment is blocked ("Runs on trust", ref `715-...`)
+
+Partner Center's automated trust vetting can reject an enrollment before any
+workspace exists, so there is **no** in-dashboard support form to open. This is
+not caused by the extension or the CI config. To recover:
+
+- Enroll as an **individual** developer, not a company — company enrollment also
+  triggers DUNS/business verification, which is the usual failure point.
+- Use an established personal Microsoft account with a complete profile; avoid
+  VPN/proxy, use a normal browser, and don't automate the signup.
+- Do **not** submit repeated registrations; that tends to deepen the block.
+- Contact support with the reference/transaction/correlation IDs at
+  <https://go.microsoft.com/fwlink/p/?linkid=868372>, or post on
+  <https://learn.microsoft.com/answers>, and wait for a manual review.
+
+There is no API or workaround that bypasses this gate. Chrome Web Store and
+Firefox AMO are unaffected; the Edge publish step is skipped while the
+`EDGE_*` secrets are unset.
+
 ### Stores without an automated step
 
 - **Opera Add-ons** has no public upload API. Upload
