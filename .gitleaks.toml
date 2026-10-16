@@ -1,0 +1,14 @@
+# Gitleaks configuration — https://github.com/gitleaks/gitleaks
+#
+# Extends the default ruleset. The only known historical finding is allowlisted
+# below; everything else must be clean.
+title = "GitPreview"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Saved GitHub web pages removed in commit 52cec5f. They contain an expired, session-scoped GitHub uploadToken and the author's public commit email. Not revocable via git; see the security audit notes."
+paths = [
+  '''^html/(blob|tree)\.html$''',
+]

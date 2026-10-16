@@ -7,26 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to release (e.g. v1.1.0)'
+        description: 'Existing ref to release (e.g. v1.1.0 or main)'
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  # Build + test + GitHub Release. No store credentials are available here, so
+  # dependency install/build/test steps can never read them.
+  build:
     runs-on: ubuntu-latest
-    env:
-      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
-      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
-      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
-      AMO_API_KEY: ${{ secrets.AMO_API_KEY }}
-      AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
-      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
-      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
-      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,7 +54,51 @@ jobs:
             gh release create "$TAG" $FILES --title "GitPreview $TAG" --generate-notes
           fi
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          if-no-files-found: error
+          path: |
+            dist
+            release
+            amo-metadata.json
+
+  # Store publishing. Runs on its own runner; the only steps that ever see store
+  # credentials are the publish steps below (job-level env, gated by `env.X`).
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+      AMO_API_KEY: ${{ secrets.AMO_API_KEY }}
+      AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+
+      - name: Read version
+        id: ver
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       # ── Chrome Web Store ────────────────────────────────────────────────
+      # Secrets: CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN,
+      #          CWS_EXTENSION_ID, CWS_PUBLISHER_ID
       - name: Publish to Chrome Web Store
         if: env.CWS_CLIENT_ID != ''
         continue-on-error: true
@@ -71,6 +108,8 @@ jobs:
           npx --yes chrome-webstore-upload-cli@4 publish
 
       # ── Firefox Add-ons (AMO) ───────────────────────────────────────────
+      # Secrets: AMO_API_KEY (JWT issuer), AMO_API_SECRET (JWT secret)
+      # --approval-timeout 0 submits for review without waiting for it.
       - name: Publish to Firefox AMO
         if: env.AMO_API_KEY != ''
         continue-on-error: true
@@ -85,6 +124,7 @@ jobs:
             --api-secret "$AMO_API_SECRET"
 
       # ── Microsoft Edge Add-ons ──────────────────────────────────────────
+      # Secrets: EDGE_PRODUCT_ID, EDGE_CLIENT_ID, EDGE_API_KEY
       - name: Publish to Microsoft Edge Add-ons
         if: env.EDGE_CLIENT_ID != ''
         continue-on-error: true
