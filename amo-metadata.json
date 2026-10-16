@@ -1,0 +1,9 @@
+{
+  "summary": {
+    "en-US": "Preview audio, video, PDF, Office documents and fonts directly on GitHub and GitLab without downloading them."
+  },
+  "categories": ["other"],
+  "version": {
+    "license": "MIT"
+  }
+}

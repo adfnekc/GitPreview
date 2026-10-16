@@ -64,6 +64,7 @@ jobs:
       # ── Chrome Web Store ────────────────────────────────────────────────
       - name: Publish to Chrome Web Store
         if: env.CWS_CLIENT_ID != ''
+        continue-on-error: true
         run: |
           ZIP="release/gitpreview-v${{ steps.ver.outputs.version }}-chrome.zip"
           npx --yes chrome-webstore-upload-cli@4 upload --source "$ZIP"
@@ -72,17 +73,21 @@ jobs:
       # ── Firefox Add-ons (AMO) ───────────────────────────────────────────
       - name: Publish to Firefox AMO
         if: env.AMO_API_KEY != ''
+        continue-on-error: true
         run: |
-          npx --yes web-ext@10 sign \
+          npx --yes web-ext@10.7.0 sign \
             --source-dir dist \
             --artifacts-dir web-ext-artifacts \
             --channel listed \
+            --amo-metadata amo-metadata.json \
+            --approval-timeout 0 \
             --api-key "$AMO_API_KEY" \
             --api-secret "$AMO_API_SECRET"
 
       # ── Microsoft Edge Add-ons ──────────────────────────────────────────
       - name: Publish to Microsoft Edge Add-ons
         if: env.EDGE_CLIENT_ID != ''
+        continue-on-error: true
         env:
           RELEASE_NOTES: GitPreview v${{ steps.ver.outputs.version }}
         run: |
