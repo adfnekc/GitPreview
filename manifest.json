@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "GitPreview - GitHub & GitLab File Previewer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Preview various file types directly on GitHub and GitLab without leaving the page.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png"
   },
-  "permissions": ["storage", "activeTab", "declarativeNetRequest", "scripting"],
+  "permissions": ["storage", "declarativeNetRequest", "scripting"],
   "host_permissions": [
     "https://github.com/*",
     "https://raw.githubusercontent.com/*",
