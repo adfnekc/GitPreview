@@ -5,6 +5,7 @@ playwright-report/
 
 # Build / packaging output
 dist/
+dist-firefox/
 release/
 web-ext-artifacts/
 gitpreview.zip

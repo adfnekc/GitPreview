@@ -24,6 +24,10 @@ listing exists — the key determines the extension ID).
 zips, creates a GitHub Release with those artifacts attached, and then publishes
 to each store **only if the corresponding secrets are configured**.
 
+`dist/` is always the Chrome build; `dist-firefox/` is generated from it (with
+`manifest.firefox.json`) and is what gets uploaded to AMO. Both directories are
+validated by `scripts/check-dist.mjs` during the build.
+
 The signed `.crx` is only produced locally (`npm run package` / `release:artifacts`)
 because it needs the private key; the stores accept the ZIP archives.
 

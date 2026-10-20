@@ -60,6 +60,7 @@ jobs:
           if-no-files-found: error
           path: |
             dist
+            dist-firefox
             release
             amo-metadata.json
 
@@ -115,7 +116,7 @@ jobs:
         continue-on-error: true
         run: |
           npx --yes web-ext@10.7.0 sign \
-            --source-dir dist \
+            --source-dir dist-firefox \
             --artifacts-dir web-ext-artifacts \
             --channel listed \
             --amo-metadata amo-metadata.json \

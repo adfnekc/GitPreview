@@ -4,6 +4,16 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Chrome: PDF preview did nothing / "Receiving end does not exist"** — the
+  packaging scripts used to leave the Firefox manifest in `dist/`, so Chrome
+  ignored `background.scripts` and never started the service worker. Firefox
+  builds now go to `dist-firefox/`, `dist/` always stays a Chrome build, and
+  `scripts/check-dist.mjs` fails the build if the output directory is invalid.
+
 ## [1.1.1] - 2026-10-16
 
 ### Removed

@@ -53,10 +53,11 @@ Tired of downloading files just to see what's inside them? GitPreview renders au
 npm install
 npm run dev          # Watch-mode build
 npm test             # Unit tests
-npm run build        # Production build to dist/
+npm run build        # Production build to dist/ (Chrome; validated by scripts/check-dist.mjs)
+npm run build:firefox  # Chrome build + Firefox variant in dist-firefox/ (dist/ untouched)
 ```
 
-Load unpacked from `dist/` in Chrome Extensions (`chrome://extensions` → Developer mode → Load unpacked).
+Load unpacked from `dist/` in Chrome Extensions (`chrome://extensions` → Developer mode → Load unpacked). For Firefox, load `dist-firefox/`.
 
 ### Releasing
 

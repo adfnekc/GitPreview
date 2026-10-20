@@ -12,7 +12,10 @@ npm run typecheck  # Type-check (tsc --noEmit)
 npm run lint       # Prettier + ESLint
 ```
 
-Load unpacked from `dist/` in Chrome Extensions page.
+Load unpacked from `dist/` in Chrome Extensions page. For Firefox, run
+`npm run build:firefox` and load `dist-firefox/` — `dist/` always stays a Chrome
+build (the build ends with `scripts/check-dist.mjs`, which rejects a Firefox
+manifest in the wrong place).
 
 ## Adding a new preview type
 
