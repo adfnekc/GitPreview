@@ -10,17 +10,36 @@ import { type PreviewHandler } from '../handler';
  * See vendor/pdfjs-viewer/pdfjs-5.7.284-dist.zip for the original distribution.
  */
 
-function getRealFilename(fallback: string): string {
-  if (location.href.includes('/blob/')) {
-    const match = document.title.match(/^(.+?)\s·\s/);
-    if (match?.[1]) return match[1].trim();
+function basename(path: string): string {
+  return path.split(/[?#]/)[0]?.split('/').filter(Boolean).pop()?.trim() ?? '';
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
   }
-  return decodeURIComponent(fallback);
+}
+
+/**
+ * Resolves the file name shown in the viewer (loading text, download name and
+ * tab title). The `fallback` from the content script is already the last URL
+ * segment, so it wins; the page title is only used when it is missing.
+ */
+export function deriveFilename(fallback: string, pageTitle: string): string {
+  const fromFallback = basename(safeDecode(fallback));
+  if (fromFallback) return fromFallback;
+
+  // GitHub tab title: "path/to/file.pdf at main · owner/repo · GitHub"
+  const titlePath = pageTitle.match(/^(.+?)\s·\s/)?.[1] ?? '';
+  const fromTitle = basename(safeDecode(titlePath).replace(/\s+at\s+\S+\s*$/, ''));
+  return fromTitle || 'document.pdf';
 }
 
 export function openPdfPreview(rawUrl: string, filename: string): void {
-  const realFilename = getRealFilename(filename);
-  const tabTitle = document.title;
+  const realFilename = deriveFilename(filename, document.title);
+  const viewerTitle = `${realFilename} · GitPreview`;
 
   const viewerUrl =
     chrome.runtime.getURL('pdf-viewer/web/viewer.html') +
@@ -29,7 +48,7 @@ export function openPdfPreview(rawUrl: string, filename: string): void {
     '&filename=' +
     encodeURIComponent(realFilename) +
     '&title=' +
-    encodeURIComponent(tabTitle);
+    encodeURIComponent(viewerTitle);
 
   chrome.runtime.sendMessage({ action: 'openPdfViewer', viewerUrl }, () => {
     if (chrome.runtime.lastError) {

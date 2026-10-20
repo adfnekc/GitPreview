@@ -31,7 +31,13 @@ interface FetchBinaryResponse {
 
   if (!rawUrl) return;
 
-  document.title = pageTitle;
+  // PDF.js derives its own title from the viewer URL / bundled sample document,
+  // so re-assert ours whenever the viewer updates it during loading.
+  const applyTitle = (): void => {
+    if (document.title !== pageTitle) document.title = pageTitle;
+  };
+
+  applyTitle();
 
   // --- Loading overlay ---
   const overlay = document.createElement('div');
@@ -97,6 +103,7 @@ interface FetchBinaryResponse {
             initializedPromise?: Promise<void>;
             url?: string;
             _downloadUrl?: string;
+            eventBus?: { on: (event: string, callback: () => void) => void };
             open: (args: { data: Uint8Array }) => Promise<void>;
           };
         }
@@ -115,8 +122,15 @@ interface FetchBinaryResponse {
       app.url = decodedFilename;
       app._downloadUrl = rawUrl;
 
+      // Re-apply the title after the viewer finishes loading; otherwise PDF.js
+      // overwrites it with the sample document name from viewer.html.
+      for (const event of ['documentloaded', 'pagesloaded', 'metadataloaded']) {
+        app.eventBus?.on?.(event, applyTitle);
+      }
+
       // Open the PDF from raw bytes (no URL origin check needed)
       await app.open({ data: bytes });
+      applyTitle();
     } catch (err) {
       console.error('GitPreview PDF load error:', err);
       overlay.querySelector('.gp-spinner')?.remove();
