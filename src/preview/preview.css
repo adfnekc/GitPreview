@@ -118,12 +118,6 @@
   opacity: 1;
 }
 
-[class*="BlobViewHeader"] .gitpreview-preview-btn.gitpreview-blob-preview-btn,
-[class*="react-blob-header"]
-  .gitpreview-preview-btn.gitpreview-blob-preview-btn {
-  margin-right: 8px;
-}
-
 .gitpreview-blob-preview-btn {
   background-color: #f6f8fa;
   border: 1px solid rgba(31, 35, 40, 0.15);
